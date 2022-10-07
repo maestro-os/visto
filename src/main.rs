@@ -4,6 +4,7 @@ use std::env;
 use std::process::exit;
 
 mod ctx;
+mod protocol;
 
 /// Structure containing command line arguments.
 struct Args {
