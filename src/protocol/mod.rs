@@ -1,6 +1,6 @@
 //! This module implements the X protocol.
 
-pub mod msg;
+pub mod connect;
 
 /// The header of a request.
 #[repr(C, packed)]

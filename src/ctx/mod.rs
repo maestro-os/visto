@@ -20,3 +20,27 @@ pub struct Context {
 
 	// TODO
 }
+
+impl Context {
+	/// Creates a new instance.
+	pub fn new() -> Self {
+		Self {
+			screens: Vec::new(),
+			windows: Vec::new(),
+
+			clients: Vec::new(),
+		}
+	}
+
+	/// Adds a new client.
+	pub fn add_client(&mut self, client: Client) {
+		self.clients.push(client);
+	}
+
+	/// TODO doc
+	pub fn tick_clients(&mut self) {
+		for c in &mut self.clients {
+			c.tick();
+		}
+	}
+}

@@ -1,9 +1,15 @@
 //! TODO doc
 
+use ctx::Context;
+use ctx::client::Client;
+use net::Listener;
 use std::env;
 use std::process::exit;
+use std::thread;
+use std::time::Duration;
 
 mod ctx;
+mod net;
 mod protocol;
 
 /// Structure containing command line arguments.
@@ -12,7 +18,7 @@ struct Args {
 	display: usize,
 
 	/// Tells whether the server listens through network.
-	listen: bool,
+	network: bool,
 
 	/// Tells whether the cursor is enabled.
 	cursor: bool,
@@ -23,7 +29,7 @@ impl Args {
 		Self {
 			display: 0,
 
-			listen: false,
+			network: false,
 
 			cursor: true,
 		}
@@ -37,7 +43,7 @@ fn parse_args() -> Args {
 	let iter = env::args().skip(1);
 	for arg in iter {
 		match arg.as_str() {
-			"-listen" => args.listen = true,
+			"-network" => args.network = true,
 			"-nocursor" => args.cursor = false,
 
 			_ if matches!(arg.chars().next(), Some(':')) => {
@@ -58,10 +64,54 @@ fn parse_args() -> Args {
 }
 
 fn main() {
-	let _args = parse_args();
+	// Parsing arguments
+	let args = parse_args();
 
 	// TODO Modesetting
-	// TODO Get screen(s) resolution
-	// TODO Create context
-	// TODO Create socket(s)
+	// TODO Get screen(s) informations
+
+	// Creating context
+	let mut ctx = Context::new();
+
+	// Creating listener
+	let unix_path = "/tmp/.X11-unix/X1"; // TODO
+	let tcp_port = {
+		if args.network {
+			Some(6000 + args.display as u16)
+		} else {
+			None
+		}
+	};
+	let listener = Listener::new(unix_path, tcp_port)
+		.unwrap_or_else(| e | {
+			eprintln!("Cannot listen for incoming connections: {}", e);
+			exit(1);
+		});
+
+	loop {
+		// TODO Add a maximum number of clients
+
+		// Accept a client
+		match listener.accept() {
+			Ok(Some(stream)) => {
+				let client = Client::new(stream);
+				ctx.add_client(client);
+			},
+
+			Ok(None) => {},
+
+			Err(e) => {
+				eprintln!("Failed to accept client connection: {}", e);
+			},
+		}
+
+		// TODO Listen for keyboard/mouse input
+
+		// Ticking clients
+		ctx.tick_clients();
+
+		// TODO Render if necessary
+
+		thread::sleep(Duration::from_millis(1));
+	}
 }

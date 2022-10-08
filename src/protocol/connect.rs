@@ -1,4 +1,4 @@
-//! This module implements protocol messages.
+//! This module implements connection on the X server protocol.
 
 /// Most Significant Byte first.
 const MSB_FIRST: u8 = 0x42;
@@ -8,9 +8,9 @@ const LSB_FIRST: u8 = 0x6c;
 /// Connect response: Failed
 const FAILED: u8 = 0;
 /// Connect response: Success
-const SUCCESS: u8 = 0;
+const SUCCESS: u8 = 1;
 /// Connect response: Authentication required
-const AUTHENTICATE: u8 = 0;
+const AUTHENTICATE: u8 = 2;
 
 /// Sent by the client at the beginning of the connection.
 #[repr(C, packed)]
