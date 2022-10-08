@@ -16,6 +16,16 @@ pub enum Stream {
 	Tcp(TcpStream),
 }
 
+impl Stream {
+	/// TODO doc
+	pub fn peek(&self, buff: &mut [u8]) -> io::Result<usize> {
+		match self {
+			Self::Unix(s) => s.peek(buff),
+			Self::Tcp(s) => s.peek(buff),
+		}
+	}
+}
+
 /// Structure listening for connections.
 pub struct Listener {
 	/// The Unix listener.

@@ -6,11 +6,11 @@ pub mod connect;
 #[repr(C, packed)]
 pub struct XRequest {
 	/// The major opcode of the request.
-	major_opcode: u8,
+	pub major_opcode: u8,
 	/// One-byte padding.
 	_padding: u8,
 	/// The total length of the request, including the header, in units of 4 bytes.
-	length: u16,
+	pub length: u16,
 }
 
 /// The header of a reply.

@@ -1,5 +1,7 @@
 //! TODO doc
 
+#![feature(unix_socket_peek)]
+
 use ctx::Context;
 use ctx::client::Client;
 use net::Listener;
