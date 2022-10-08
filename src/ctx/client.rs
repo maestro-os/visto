@@ -17,6 +17,9 @@ use std::io;
 use std::mem::size_of;
 use std::ptr;
 
+/// The maximum length of a request.
+const MAX_REQUEST_LEN: usize = 1 << 16; // TODO Increase?
+
 /// The state of a client.
 pub enum ClientState {
 	/// The server is waiting for a connect request.
@@ -33,7 +36,7 @@ pub struct Client {
 	/// The client's socket.
 	stream: Stream,
 	/// The buffer to read data from the client.
-	buff: [u8; 1 << 16],
+	buff: [u8; MAX_REQUEST_LEN],
 
 	/// The client's state.
 	state: ClientState,
@@ -47,7 +50,7 @@ impl Client {
 	pub fn new(stream: Stream) -> Self {
 		Self {
 			stream,
-			buff: [0; 1 << 16],
+			buff: [0; MAX_REQUEST_LEN],
 
 			state: ClientState::Waiting,
 
@@ -57,6 +60,9 @@ impl Client {
 
 	/// Writes a connect failed message with the given reason.
 	pub fn write_connect_failed(&mut self, reason: &str) -> io::Result<()> {
+		println!("New client connection failed: {}", reason);
+		self.state = ClientState::ConnectFailed;
+
 		let reason_len = reason.len();
 		let additional_data_len = reason_len + pad(reason_len);
 
@@ -93,6 +99,9 @@ impl Client {
 
 	/// Writes a connect success message with the given reason.
 	pub fn write_connect_success(&mut self) -> io::Result<()> {
+		println!("New client connection succeeded");
+		self.state = ClientState::ConnectSucess;
+
 		let additional_data_len = VENDOR_NAME.len()
 			+ pad(VENDOR_NAME.len())
 			+ 0 * size_of::<Format>() // TODO
@@ -106,22 +115,22 @@ impl Client {
 
 			additional_data_len: (additional_data_len / 4) as _,
 
-			release_number: 0, // TODO
-			resource_id_base: 0, // TODO
-			resource_id_mask: 0, // TODO
+			release_number: crate::RELEASE_NUMBER,
+			resource_id_base: !0,
+			resource_id_mask: !0,
 			motion_buffer_size: 0, // TODO
 			vendor_length: VENDOR_NAME.len() as _,
-			max_request_length: 0, // TODO
+			max_request_length: (MAX_REQUEST_LEN / 4) as u16,
 			roots_screens_number: 0, // TODO
 			pixmap_formats_count: 0, // TODO
-			image_byte_order: 0, // TODO
+			image_byte_order: 1, // MSB first
 
-			bitmap_format_bit_order: 0, // TODO
+			bitmap_format_bit_order: 0, // LSB first
 			bitmap_format_scanline_unit: 0, // TODO
 			bitmap_format_scanline_pad: 0, // TODO
 
-			min_keycode: 0, // TODO
-			max_keycode: 0, // TODO
+			min_keycode: 8,
+			max_keycode: 255,
 
 			/// Padding.
 			_padding1: 0,
@@ -182,8 +191,6 @@ impl Client {
 			// Invalid value
 			_ => {
 				self.write_connect_failed("Invalid byte_order value")?;
-				self.state = ClientState::ConnectFailed;
-
 				return Ok(());
 			},
 		}
@@ -197,14 +204,10 @@ impl Client {
 				maj_ver,
 				min_ver
 			).as_str())?;
-			self.state = ClientState::ConnectFailed;
-
 			return Ok(());
 		}
 
 		self.write_connect_success();
-		self.state = ClientState::ConnectSucess;
-
 		Ok(())
 	}
 

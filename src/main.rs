@@ -15,6 +15,9 @@ mod net;
 mod protocol;
 mod util;
 
+/// The release number.
+pub const RELEASE_NUMBER: u32 = 0;
+
 /// Structure containing command line arguments.
 struct Args {
 	/// The display number.
