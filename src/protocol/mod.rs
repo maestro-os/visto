@@ -2,6 +2,14 @@
 
 pub mod connect;
 
+/// Major version of the protocol.
+pub const MAJOR_VERSION: u16 = 11;
+/// Minor version of the protocol.
+pub const MINOR_VERSION: u16 = 0;
+
+/// The vendor's name.
+pub const VENDOR_NAME: &str = "TODO"; // TODO
+
 /// The header of a request.
 #[repr(C, packed)]
 pub struct XRequest {
@@ -311,4 +319,9 @@ pub struct Visual {
 
 	/// TODO doc
 	_padding: u32,
+}
+
+/// Pads the given number `n`.
+pub fn pad(n: usize) -> usize {
+	(4 - (n % 4)) % 4
 }

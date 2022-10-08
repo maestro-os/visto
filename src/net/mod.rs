@@ -1,6 +1,8 @@
 //! This module implements socket communications. Both Unix sockets and network sockets are
 //! supported.
 
+use std::io::Read;
+use std::io::Write;
 use std::io;
 use std::net::TcpListener;
 use std::net::TcpStream;
@@ -18,10 +20,35 @@ pub enum Stream {
 
 impl Stream {
 	/// TODO doc
-	pub fn peek(&self, buff: &mut [u8]) -> io::Result<usize> {
+	pub fn peek(&self, buf: &mut [u8]) -> io::Result<usize> {
 		match self {
-			Self::Unix(s) => s.peek(buff),
-			Self::Tcp(s) => s.peek(buff),
+			Self::Unix(s) => s.peek(buf),
+			Self::Tcp(s) => s.peek(buf),
+		}
+	}
+}
+
+impl Read for Stream {
+	fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
+		match self {
+			Self::Unix(s) => s.read(buf),
+			Self::Tcp(s) => s.read(buf),
+		}
+	}
+}
+
+impl Write for Stream {
+	fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+		match self {
+			Self::Unix(s) => s.write(buf),
+			Self::Tcp(s) => s.write(buf),
+		}
+	}
+
+	fn flush(&mut self) -> io::Result<()> {
+		match self {
+			Self::Unix(s) => s.flush(),
+			Self::Tcp(s) => s.flush(),
 		}
 	}
 }

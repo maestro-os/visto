@@ -13,6 +13,7 @@ use std::time::Duration;
 mod ctx;
 mod net;
 mod protocol;
+mod util;
 
 /// Structure containing command line arguments.
 struct Args {
