@@ -76,7 +76,7 @@ fn main() {
 
 	// TODO Modesetting
 	// TODO Get screen(s) informations
-	drm::scan_devices();
+	let _devs = drm::scan_devices();
 
 	// Creating context
 	let mut ctx = Context::new();
