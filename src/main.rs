@@ -74,9 +74,11 @@ fn main() {
 	// Parsing arguments
 	let args = parse_args();
 
-	// TODO Modesetting
-	// TODO Get screen(s) informations
-	let _devs = drm::DRICard::scan();
+	// TODO
+	let devs = drm::DRICard::scan();
+	for d in devs {
+		d.get_connectors();
+	}
 
 	// Creating context
 	let mut ctx = Context::new();

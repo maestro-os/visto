@@ -137,13 +137,13 @@ pub struct DRICard {
 	fb_max_height: u32,
 
 	/// List of framebuffer IDs.
-	fb_id_ptr: Vec<u32>,
+	fb_ids: Vec<u32>,
 	/// List of CRTC IDs.
-	crtc_id_ptr: Vec<u32>,
+	crtc_ids: Vec<u32>,
 	/// List of connectors IDs.
-	connector_id_ptr: Vec<u32>,
+	connector_ids: Vec<u32>,
 	/// List of encoders IDs.
-	encoder_id_ptr: Vec<u32>,
+	encoder_ids: Vec<u32>,
 }
 
 impl DRICard {
@@ -179,16 +179,16 @@ impl DRICard {
 				fb_min_height: card_res.min_height,
 				fb_max_height: card_res.max_height,
 
-				fb_id_ptr: vec![0; card_res.count_fbs as usize],
-				crtc_id_ptr: vec![0; card_res.count_crtcs as usize],
-				connector_id_ptr: vec![0; card_res.count_connectors as usize],
-				encoder_id_ptr: vec![0; card_res.count_encoders as usize],
+				fb_ids: vec![0; card_res.count_fbs as usize],
+				crtc_ids: vec![0; card_res.count_crtcs as usize],
+				connector_ids: vec![0; card_res.count_connectors as usize],
+				encoder_ids: vec![0; card_res.count_encoders as usize],
 			};
 
-			card_res.fb_id_ptr = card.fb_id_ptr.as_ptr() as _;
-			card_res.crtc_id_ptr = card.crtc_id_ptr.as_ptr() as _;
-			card_res.connector_id_ptr = card.connector_id_ptr.as_ptr() as _;
-			card_res.encoder_id_ptr = card.encoder_id_ptr.as_ptr() as _;
+			card_res.fb_id_ptr = card.fb_ids.as_ptr() as _;
+			card_res.crtc_id_ptr = card.crtc_ids.as_ptr() as _;
+			card_res.connector_id_ptr = card.connector_ids.as_ptr() as _;
+			card_res.encoder_id_ptr = card.encoder_ids.as_ptr() as _;
 
 			let res = unsafe {
 				libc::ioctl(
@@ -217,11 +217,32 @@ impl DRICard {
 	}
 
 	/// Returns the list of connectors associated with the device.
-	pub fn get_connectors(&mut self) {
-		let mut _conn = DRMModeGetConnector::default();
+	pub fn get_connectors(&self) -> Vec<()> {
+		let mut connectors = vec![];
 
-		// TODO
-		todo!();
+		for id in &self.connector_ids {
+			let fd = self.dev.as_raw_fd();
+
+			let mut conn = DRMModeGetConnector::default();
+			conn.connector_id = *id;
+
+			let res = unsafe {
+				libc::ioctl(
+					fd,
+					DRM_IOCTL_MODE_GETCONNECTOR,
+					&mut conn as *const _
+				)
+			};
+			if res < 0 {
+				continue;
+			}
+
+			// TODO rm
+			println!("-> {:?}", conn);
+			todo!();
+		}
+
+		connectors
 	}
 
 	// TODO Rest of init
