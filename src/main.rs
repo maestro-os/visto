@@ -11,6 +11,7 @@ use std::thread;
 use std::time::Duration;
 
 mod ctx;
+mod drm;
 mod net;
 mod protocol;
 mod util;
@@ -75,6 +76,7 @@ fn main() {
 
 	// TODO Modesetting
 	// TODO Get screen(s) informations
+	drm::scan_devices();
 
 	// Creating context
 	let mut ctx = Context::new();
