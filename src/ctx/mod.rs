@@ -37,10 +37,16 @@ impl Context {
 		self.clients.push(client);
 	}
 
-	/// TODO doc
+	/// Ticks every connected client.
 	pub fn tick_clients(&mut self) {
 		for c in &mut self.clients {
-			c.tick();
+			match c.tick() {
+				Err(_e) => {
+					// TODO Remove client?
+				},
+
+				_ => {},
+			}
 		}
 	}
 }

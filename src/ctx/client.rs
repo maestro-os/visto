@@ -2,7 +2,6 @@
 
 use crate::net::Stream;
 use crate::protocol::Format;
-use crate::protocol::Screen;
 use crate::protocol::VENDOR_NAME;
 use crate::protocol::XRequest;
 use crate::protocol::connect::ClientConnect;
@@ -207,8 +206,7 @@ impl Client {
 			return Ok(());
 		}
 
-		self.write_connect_success();
-		Ok(())
+		self.write_connect_success()
 	}
 
 	/// Handles an incoming request, if any.
