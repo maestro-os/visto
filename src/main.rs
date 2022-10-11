@@ -76,8 +76,9 @@ fn main() {
 
 	// TODO
 	let devs = drm::DRICard::scan();
-	for d in devs {
-		d.get_connectors();
+	for d in &devs {
+		let _conn = drm::DRIConnector::scan(d);
+		println!("-> {:?}", _conn);
 	}
 
 	// Creating context

@@ -3,6 +3,13 @@
 use std::fs::File;
 use std::os::unix::io::AsRawFd;
 
+// TODO Rest of init
+// - Iterate on encoders available for each connectors
+// - Associate a CRTC for each encoder
+// - List valid modes for each connectors
+// - Select a mode for each connector
+// - Create framebuffers
+
 /// TODO doc
 macro_rules! ioc {
 	($a:expr, $b:expr, $c:expr, $d:expr) => {
@@ -75,7 +82,7 @@ struct DRMModeCardRes {
 	max_height: u32,
 }
 
-/// TODO doc
+/// Structure representing a DRM connector.
 #[derive(Debug, Default)]
 #[repr(C)]
 struct DRMModeGetConnector {
@@ -120,7 +127,46 @@ struct DRMModeGetConnector {
 	pad: u32,
 }
 
+/// Structure storing a mode's informations.
+#[derive(Clone, Debug, Default)]
+#[repr(C)]
+pub struct DRMModeModeinfo {
+	/// Pixel clock in kHz.
+	clock: u32,
+	/// Horizontal display size.
+	hdisplay: u16,
+	/// Horizontal sync start.
+	hsync_start: u16,
+	/// Horizontal sync end.
+	hsync_end: u16,
+	/// Horizontal total size.
+	htotal: u16,
+	/// Horizontal skew.
+	hskew: u16,
+	/// Vertical display size.
+	vdisplay: u16,
+	/// Vertical sync start.
+	vsync_start: u16,
+	/// Vertical sync end.
+	vsync_end: u16,
+	/// Vertical total size.
+	vtotal: u16,
+	/// Vertical scan.
+	vscan: u16,
+
+	/// Approximate vertical refresh rate in Hz.
+	vrefresh: u32,
+
+	/// Bitmask of misc. flags.
+	flags: u32,
+	/// Bitmask of type flags.
+	type_: u32,
+	/// String describing the mode resolution.
+	name: [u8; 32],
+}
+
 /// Structure representing a DRI device.
+#[derive(Debug)]
 pub struct DRICard {
 	/// The path to the device file.
 	path: String,
@@ -185,10 +231,18 @@ impl DRICard {
 				encoder_ids: vec![0; card_res.count_encoders as usize],
 			};
 
-			card_res.fb_id_ptr = card.fb_ids.as_ptr() as _;
-			card_res.crtc_id_ptr = card.crtc_ids.as_ptr() as _;
-			card_res.connector_id_ptr = card.connector_ids.as_ptr() as _;
-			card_res.encoder_id_ptr = card.encoder_ids.as_ptr() as _;
+			if card_res.count_fbs > 0 {
+				card_res.fb_id_ptr = card.fb_ids.as_ptr() as _;
+			}
+			if card_res.count_crtcs > 0 {
+				card_res.crtc_id_ptr = card.crtc_ids.as_ptr() as _;
+			}
+			if card_res.count_connectors > 0 {
+				card_res.connector_id_ptr = card.connector_ids.as_ptr() as _;
+			}
+			if card_res.count_encoders > 0 {
+				card_res.encoder_id_ptr = card.encoder_ids.as_ptr() as _;
+			}
 
 			let res = unsafe {
 				libc::ioctl(
@@ -197,6 +251,9 @@ impl DRICard {
 					&mut card_res as *const _
 				)
 			};
+
+			// TODO If count changes (hotplug), retry
+
 			if res >= 0 {
 				return Some(card);
 			}
@@ -215,41 +272,91 @@ impl DRICard {
 
 		devs
 	}
+}
 
-	/// Returns the list of connectors associated with the device.
-	pub fn get_connectors(&self) -> Vec<()> {
+/// Structure representing a connector.
+#[derive(Debug)]
+pub struct DRIConnector {
+	// TODO
+
+	/// List of encoders.
+	encoders: Vec<u32>,
+	/// List of modes.
+	modes: Vec<DRMModeModeinfo>,
+	/// List of props.
+	props: Vec<u32>,
+	/// List of prop values.
+	prop_values: Vec<u64>,
+}
+
+impl DRIConnector {
+	/// Loads the connector with ID `id`. If the connector doesn't exist, the function returns
+	/// None.
+	///
+	/// `card` is the card associated with the connector to be loaded.
+	pub fn load(card: &DRICard, id: u32) -> Option<Self> {
+		let fd = card.dev.as_raw_fd();
+
+		let mut conn = DRMModeGetConnector::default();
+		conn.connector_id = id;
+
+		let res = unsafe {
+			libc::ioctl(
+				fd,
+				DRM_IOCTL_MODE_GETCONNECTOR,
+				&mut conn as *const _
+			)
+		};
+		if res < 0 {
+			return None;
+		}
+
+		let mut connector = DRIConnector {
+			// TODO
+
+			encoders: vec![0; conn.count_encoders as usize],
+			modes: vec![DRMModeModeinfo::default(); conn.count_modes as usize],
+			props: vec![0; conn.count_props as usize],
+			prop_values: vec![0; conn.count_props as usize],
+		};
+
+		if conn.count_encoders > 0 {
+			conn.encoders_ptr = connector.encoders.as_ptr() as _;
+		}
+		if conn.count_modes > 0 {
+			conn.modes_ptr = connector.modes.as_ptr() as _;
+		}
+		if conn.count_props > 0 {
+			conn.props_ptr = connector.props.as_ptr() as _;
+			conn.prop_values_ptr = connector.prop_values.as_ptr() as _;
+		}
+
+		let res = unsafe {
+			libc::ioctl(
+				fd,
+				DRM_IOCTL_MODE_GETCONNECTOR,
+				&mut conn as *const _
+			)
+		};
+		if res < 0 {
+			return None;
+		}
+
+		// TODO If count changes (hotplug), retry
+
+		Some(connector)
+	}
+
+	/// Scans for connectors from the given card.
+	pub fn scan(card: &DRICard) -> Vec<Self> {
 		let mut connectors = vec![];
 
-		for id in &self.connector_ids {
-			let fd = self.dev.as_raw_fd();
-
-			let mut conn = DRMModeGetConnector::default();
-			conn.connector_id = *id;
-
-			let res = unsafe {
-				libc::ioctl(
-					fd,
-					DRM_IOCTL_MODE_GETCONNECTOR,
-					&mut conn as *const _
-				)
-			};
-			if res < 0 {
-				continue;
+		for id in &card.connector_ids {
+			if let Some(conn) = Self::load(card, *id) {
+				connectors.push(conn);
 			}
-
-			// TODO rm
-			println!("-> {:?}", conn);
-			todo!();
 		}
 
 		connectors
 	}
-
-	// TODO Rest of init
-	// - Get connectors list
-	// - Iterate on encoders available for each connectors
-	// - Associate a CRTC for each encoder
-	// - List valid modes for each connectors
-	// - Select a mode for each connector
-	// - Create framebuffers
 }
