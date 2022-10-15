@@ -277,12 +277,15 @@ impl DRICard {
 /// Structure representing a connector.
 #[derive(Debug)]
 pub struct DRIConnector {
-	// TODO
+	/// Width of the connected sink in millimeters.
+	pub mm_width: u32,
+	/// Height of the connected sink in millimeters.
+	pub mm_height: u32,
 
 	/// List of encoders.
 	encoders: Vec<u32>,
 	/// List of modes.
-	modes: Vec<DRMModeModeinfo>,
+	pub modes: Vec<DRMModeModeinfo>,
 	/// List of props.
 	props: Vec<u32>,
 	/// List of prop values.
@@ -312,7 +315,8 @@ impl DRIConnector {
 		}
 
 		let mut connector = DRIConnector {
-			// TODO
+			mm_width: conn.mm_width,
+			mm_height: conn.mm_height,
 
 			encoders: vec![0; conn.count_encoders as usize],
 			modes: vec![DRMModeModeinfo::default(); conn.count_modes as usize],

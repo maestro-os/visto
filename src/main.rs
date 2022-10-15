@@ -1,5 +1,6 @@
 //! TODO doc
 
+#![feature(linked_list_cursors)]
 #![feature(unix_socket_peek)]
 
 use ctx::Context;
@@ -47,6 +48,8 @@ impl Args {
 fn parse_args() -> Args {
 	let mut args = Args::default();
 
+	// TODO Read environment variables
+
 	let iter = env::args().skip(1);
 	for arg in iter {
 		match arg.as_str() {
@@ -74,18 +77,12 @@ fn main() {
 	// Parsing arguments
 	let args = parse_args();
 
-	// TODO
-	let devs = drm::DRICard::scan();
-	for d in &devs {
-		let _conn = drm::DRIConnector::scan(d);
-		println!("-> {:?}", _conn);
-	}
-
 	// Creating context
 	let mut ctx = Context::new();
+	ctx.scan_screens();
 
 	// Creating listener
-	let unix_path = "/tmp/.X11-unix/X1"; // TODO
+	let unix_path = format!("/tmp/.X11-unix/X{}", args.display);
 	let tcp_port = {
 		if args.network {
 			Some(6000 + args.display as u16)
@@ -93,7 +90,7 @@ fn main() {
 			None
 		}
 	};
-	let listener = Listener::new(unix_path, tcp_port)
+	let listener = Listener::new(&unix_path, tcp_port)
 		.unwrap_or_else(| e | {
 			eprintln!("Cannot listen for incoming connections: {}", e);
 			exit(1);

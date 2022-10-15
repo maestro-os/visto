@@ -5,7 +5,9 @@ pub mod screen;
 pub mod window;
 
 use client::Client;
+use crate::drm;
 use screen::Screen;
+use std::collections::LinkedList;
 use window::Window;
 
 /// Structure representing a context.
@@ -16,9 +18,7 @@ pub struct Context {
 	windows: Vec<Window>,
 
 	/// The list of clients.
-	clients: Vec<Client>,
-
-	// TODO
+	clients: LinkedList<Client>,
 }
 
 impl Context {
@@ -28,25 +28,53 @@ impl Context {
 			screens: Vec::new(),
 			windows: Vec::new(),
 
-			clients: Vec::new(),
+			clients: LinkedList::new(),
 		}
+	}
+
+	/// Scans for screens on DRM.
+	pub fn scan_screens(&mut self) {
+		self.screens.clear();
+
+		for dev in drm::DRICard::scan() {
+			for conn in drm::DRIConnector::scan(&dev) {
+				self.screens.push(Screen::new(conn));
+			}
+		}
+	}
+
+	/// Returns an immutable reference to the list of screens.
+	pub fn get_screens(&self) -> &[Screen] {
+		&self.screens
+	}
+
+	/// Returns a mutable reference to the list of screens.
+	pub fn get_screens_mut(&mut self) -> &mut [Screen] {
+		&mut self.screens
 	}
 
 	/// Adds a new client.
 	pub fn add_client(&mut self, client: Client) {
-		self.clients.push(client);
+		self.clients.push_back(client);
 	}
 
 	/// Ticks every connected client.
 	pub fn tick_clients(&mut self) {
-		for c in &mut self.clients {
-			match c.tick() {
-				Err(_e) => {
-					// TODO Remove client?
+		let mut cursor = self.clients.cursor_front_mut();
+
+		while let Some(client) = cursor.current() {
+			match client.tick() {
+				Err(e) => {
+					// TODO rm?
+					println!("Client error: {}", e);
+
+					cursor.remove_current();
 				},
 
 				_ => {},
 			}
+
+			cursor.move_next();
 		}
 	}
 }
