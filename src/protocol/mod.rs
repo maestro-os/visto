@@ -149,40 +149,40 @@ pub enum ButMask {
 /// A 2D point.
 pub struct Point {
 	/// X position.
-	x: i16,
+	pub x: i16,
 	/// Y position.
-	y: i16,
+	pub y: i16,
 }
 
 /// A rectangle.
 pub struct Rectangle {
 	/// X position.
-	x: i16,
+	pub x: i16,
 	/// Y position.
-	y: i16,
+	pub y: i16,
 
 	/// The width of the rectangle.
-	width: u16,
+	pub width: u16,
 	/// The height of the rectangle.
-	height: u16,
+	pub height: u16,
 }
 
 /// An arc.
 pub struct Arc {
 	/// X position.
-	x: i16,
+	pub x: i16,
 	/// Y position.
-	y: i16,
+	pub y: i16,
 
 	/// The width of the arc.
-	width: u16,
+	pub width: u16,
 	/// The height of the arc.
-	height: u16,
+	pub height: u16,
 
 	/// TODO doc
-	angle1: i16,
+	pub angle1: i16,
 	/// TODO doc
-	angle2: i16,
+	pub angle2: i16,
 }
 
 /// Enumeration of host families.
@@ -197,10 +197,10 @@ pub enum HostFamily {
 /// An host.
 pub struct Host {
 	/// The host family.
-	family: HostFamily,
+	pub family: HostFamily,
 
 	/// The address of the host.
-	address: Vec<u8>,
+	pub address: Vec<u8>,
 }
 
 /// Enumeration of errors.
@@ -224,101 +224,114 @@ pub enum Error {
 	Window,
 }
 
-/// TODO doc
+/// Structure representing a X format.
 #[repr(C, packed)]
 pub struct Format {
 	/// TODO doc
-	depth: u8,
+	pub depth: u8,
 	/// TODO doc
-	bits_per_pixel: u8,
+	pub bits_per_pixel: u8,
 	/// TODO doc
-	scanline_pad: u8,
+	pub scanline_pad: u8,
 }
 
-/// TODO doc
+/// Structure representing a X screen.
 #[repr(C, packed)]
 pub struct Screen {
 	/// TODO doc
-	root: u32,
+	pub root: u32,
 	/// TODO doc
-	default_colormap: u32,
+	pub default_colormap: u32,
 	/// TODO doc
-	white_pixel: u32,
+	pub white_pixel: u32,
 	/// TODO doc
-	black_pixel: u32,
+	pub black_pixel: u32,
 	/// TODO doc
-	current_input_masks: Event,
+	pub current_input_masks: u8,
 
 	/// The screen's width in pixels.
-	pixels_width: u16,
+	pub pixels_width: u16,
 	/// The screen's height in pixels.
-	pixels_height: u16,
+	pub pixels_height: u16,
 	/// The screen's width in millimeters.
-	millimeters_width: u16,
+	pub millimeters_width: u16,
 	/// The screen's height in millimeters.
-	millimeters_height: u16,
+	pub millimeters_height: u16,
 
 	/// TODO doc
-	min_installed_maps: u16,
+	pub min_installed_maps: u16,
 	/// TODO doc
-	max_installed_maps: u16,
+	pub max_installed_maps: u16,
 
 	/// TODO doc
-	root_visual: u32,
+	pub root_visual: u32,
 	/// TODO doc
-	backing_stores: u8,
+	pub backing_stores: u8,
 	/// TODO doc
-	save_unders: u8,
+	pub save_unders: u8,
 	/// TODO doc
-	root_depth: u8,
+	pub root_depth: u8,
 
 	/// The number of allowed depths.
-	allowed_depths_len: u8,
-	/// Allowed depths.
-	/// This field doesn't have type `[Depth]` because Depth is Unsized.
-	allowed_depths: [u8],
+	pub allowed_depths_len: u8,
 }
 
-/// TODO doc
+/// Structure representing a X depth.
 #[repr(C, packed)]
 pub struct Depth {
-	/// TODO doc
-	depth: u8,
+	/// The depth.
+	pub depth: u8,
 
 	/// Padding.
-	_padding0: u8,
+	pub _padding0: u8,
 
-	/// TODO doc
-	visuals_len: u16,
+	/// Number of visuals.
+	pub visuals_len: u16,
 
 	/// Padding.
-	_padding1: u32,
-
-	/// TODO doc
-	visuals: [Visual],
+	pub _padding1: u32,
 }
 
-/// TODO doc
+/// Enumeration of visual classes.
+#[repr(u8)]
+pub enum VisualClass {
+	/// A degenerate case of GrayScale where values are predefined and read-only.
+	StaticGray = 0,
+	/// A degenerate case of PseudoColor where red, greeen and blue are equal, producing shades of
+	/// gray.
+	GrayScale = 1,
+	/// A degenerate case PseudoColor where read, green and blue are predefined and read-only.
+	StaticColor = 2,
+	/// Red, green and blue values that can be changed dynamically.
+	PseudoColor = 3,
+	/// A degenerate case of DirectColor where red, green and blue values are predefined and
+	/// read-only.
+	TrueColor = 4,
+	/// Dynamic red, green and blue values producing colors.
+	DirectColor = 5,
+}
+
+/// Structure representing a X visual.
 #[repr(C, packed)]
 pub struct Visual {
+	/// The visual's ID.
+	pub visual_id: u32,
+	/// The visual class.
+	pub class: VisualClass,
+	/// The number of bits per RGB values.
+	pub bits_per_rgb_value: u8,
 	/// TODO doc
-	visual_id: u32,
-	/// TODO doc
-	class: u8,
-	/// TODO doc
-	bits_per_rgb_value: u8,
-	/// TODO doc
-	colormap_entries: u16,
+	pub colormap_entries: u16,
 
-	/// TODO doc
-	red_mask: u32,
-	/// TODO doc
-	green_mask: u32,
-	/// TODO doc
-	blue_mask: u32,
+	/// The mask of bits on which the Red color is encoded.
+	pub red_mask: u32,
+	/// The mask of bits on which the Green color is encoded.
+	pub green_mask: u32,
+	/// The mask of bits on which the Blue color is encoded.
+	pub blue_mask: u32,
 
-	/// TODO doc
-	_padding: u32,
+	/// Padding.
+	pub _padding: u32,
 }
 
 /// Pads the given number `n`.

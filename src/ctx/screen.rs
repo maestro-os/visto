@@ -1,6 +1,9 @@
 //! A "screen" is a monitor attached to the server on which rendering is done (also called "sink").
 
 use crate::drm;
+use crate::protocol;
+use std::mem::size_of;
+use std::ptr;
 
 /// Structure representing a screen.
 pub struct Screen {
@@ -9,17 +12,24 @@ pub struct Screen {
 
 	/// The screen's current mode.
 	curr_mode: Option<drm::DRMModeModeinfo>,
+
+	/// The ID of the root window of the screen.
+	root_win_id: u32,
 }
 
 impl Screen {
 	/// Creates a new instance.
 	///
-	/// `conn` is the connector associated with the screen.
-	pub fn new(conn: drm::DRIConnector) -> Self {
+	/// Arguments:
+	/// - `conn` is the connector associated with the screen.
+	/// - `root_win_id` is the ID of the root window of the screen.
+	pub fn new(conn: drm::DRIConnector, root_win_id: u32) -> Self {
 		Self {
 			dri_connector: conn,
 
 			curr_mode: None,
+
+			root_win_id,
 		}
 	}
 
@@ -46,4 +56,80 @@ impl Screen {
 	}
 
 	// TODO create/get framebuffer
+
+	/// Returns the protocol representation of the screen.
+	pub fn to_protocol_screen(&self) -> Vec<u8> {
+		let mut data = vec![];
+
+		// Getting pixels width/height
+		let (pixels_width, pixels_height) = match &self.curr_mode {
+			Some(mode) => (mode.hdisplay, mode.vdisplay),
+			None => (0, 0),
+		};
+
+		// TODO Fill according to screen informations
+		let visual = protocol::Visual {
+			visual_id: 0, // TODO
+			class: protocol::VisualClass::DirectColor,
+			bits_per_rgb_value: 24,
+			colormap_entries: 0, // TODO
+
+			red_mask: 0xff0000,
+			green_mask: 0x00ff00,
+			blue_mask: 0x0000ff,
+
+			_padding: 0,
+		};
+		let depth = protocol::Depth {
+			depth: 24,
+
+			_padding0: 0,
+
+			visuals_len: 1,
+
+			_padding1: 0,
+		};
+		let screen = protocol::Screen {
+			root: self.root_win_id,
+			default_colormap: 0, // TODO
+			white_pixel: 0xffffff,
+			black_pixel: 0x000000,
+			current_input_masks: 0, // TODO
+
+			pixels_width,
+			pixels_height,
+			millimeters_width: self.dri_connector.mm_width as _,
+			millimeters_height: self.dri_connector.mm_height as _,
+
+			min_installed_maps: 0, // TODO
+			max_installed_maps: 0, // TODO
+
+			root_visual: 0, // TODO
+			backing_stores: 0, // TODO
+			save_unders: 0, // TODO
+			root_depth: 24, // TODO
+
+			allowed_depths_len: 1, // TODO
+		};
+
+		unsafe {
+			ptr::copy_nonoverlapping::<u8>(
+				&screen as *const _ as *const u8,
+				&mut data[0],
+				size_of::<protocol::Screen>()
+			);
+			ptr::copy_nonoverlapping::<u8>(
+				&depth as *const _ as *const u8,
+				&mut data[size_of::<protocol::Screen>()],
+				size_of::<protocol::Depth>()
+			);
+			ptr::copy_nonoverlapping::<u8>(
+				&visual as *const _ as *const u8,
+				&mut data[size_of::<protocol::Screen>() + size_of::<protocol::Depth>()],
+				size_of::<protocol::Visual>()
+			);
+		}
+
+		data
+	}
 }

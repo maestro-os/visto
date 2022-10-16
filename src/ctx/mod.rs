@@ -39,7 +39,12 @@ impl Context {
 
 		for dev in drm::DRICard::scan() {
 			for conn in drm::DRIConnector::scan(&dev) {
-				self.screens.push(Screen::new(conn));
+				let root = Window::new_root();
+				self.windows.push(root);
+				let root_id = 0; // TODO
+
+				let screen = Screen::new(conn, root_id);
+				self.screens.push(screen);
 			}
 		}
 	}
@@ -71,8 +76,7 @@ impl Context {
 		while let Some(client) = cursor.current() {
 			match client.tick() {
 				Err(e) => {
-					// TODO rm?
-					println!("Client error: {}", e);
+					println!("Client disconnect: {}", e);
 
 					if let Some(removed) = cursor.remove_current() {
 						poll_handler.remove_fd(removed.get_stream());

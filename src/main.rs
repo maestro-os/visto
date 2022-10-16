@@ -14,8 +14,6 @@ use ctx::client::Client;
 use net::Listener;
 use std::env;
 use std::process::exit;
-use std::thread;
-use std::time::Duration;
 
 /// The release number.
 pub const RELEASE_NUMBER: u32 = 0;

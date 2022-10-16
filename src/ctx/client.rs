@@ -1,7 +1,6 @@
 //! TODO doc
 
 use crate::net::Stream;
-use crate::net::poll::PollHandler;
 use crate::protocol::Format;
 use crate::protocol::VENDOR_NAME;
 use crate::protocol::XRequest;

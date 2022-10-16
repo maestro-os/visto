@@ -132,37 +132,37 @@ struct DRMModeGetConnector {
 #[repr(C)]
 pub struct DRMModeModeinfo {
 	/// Pixel clock in kHz.
-	clock: u32,
+	pub clock: u32,
 	/// Horizontal display size.
-	hdisplay: u16,
+	pub hdisplay: u16,
 	/// Horizontal sync start.
-	hsync_start: u16,
+	pub hsync_start: u16,
 	/// Horizontal sync end.
-	hsync_end: u16,
+	pub hsync_end: u16,
 	/// Horizontal total size.
-	htotal: u16,
+	pub htotal: u16,
 	/// Horizontal skew.
-	hskew: u16,
+	pub hskew: u16,
 	/// Vertical display size.
-	vdisplay: u16,
+	pub vdisplay: u16,
 	/// Vertical sync start.
-	vsync_start: u16,
+	pub vsync_start: u16,
 	/// Vertical sync end.
-	vsync_end: u16,
+	pub vsync_end: u16,
 	/// Vertical total size.
-	vtotal: u16,
+	pub vtotal: u16,
 	/// Vertical scan.
-	vscan: u16,
+	pub vscan: u16,
 
 	/// Approximate vertical refresh rate in Hz.
-	vrefresh: u32,
+	pub vrefresh: u32,
 
 	/// Bitmask of misc. flags.
-	flags: u32,
+	pub flags: u32,
 	/// Bitmask of type flags.
-	type_: u32,
+	pub type_: u32,
 	/// String describing the mode resolution.
-	name: [u8; 32],
+	pub name: [u8; 32],
 }
 
 /// Structure representing a DRI device.
