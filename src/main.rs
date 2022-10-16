@@ -3,6 +3,7 @@
 #![feature(linked_list_cursors)]
 #![feature(unix_socket_peek)]
 
+mod atom;
 mod ctx;
 mod drm;
 mod net;
