@@ -1,6 +1,7 @@
 //! TODO doc
 
 use crate::net::Stream;
+use crate::net::poll::PollHandler;
 use crate::protocol::Format;
 use crate::protocol::VENDOR_NAME;
 use crate::protocol::XRequest;
@@ -55,6 +56,11 @@ impl Client {
 
 			msb_first: false,
 		}
+	}
+
+	/// Returns an immutable reference to the stream associated with the client.
+	pub fn get_stream(&self) -> &Stream {
+		&self.stream
 	}
 
 	/// Writes a connect failed message with the given reason.

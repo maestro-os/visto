@@ -1,6 +1,9 @@
 //! This module implements socket communications. Both Unix sockets and network sockets are
 //! supported.
 
+pub mod poll;
+
+use poll::PollHandler;
 use std::io::Read;
 use std::io::Write;
 use std::io;
@@ -8,6 +11,8 @@ use std::net::TcpListener;
 use std::net::TcpStream;
 use std::os::unix::net::UnixListener;
 use std::os::unix::net::UnixStream;
+use std::os::unix::prelude::AsRawFd;
+use std::os::unix::prelude::RawFd;
 
 /// A client's socket stream.
 pub enum Stream {
@@ -53,13 +58,24 @@ impl Write for Stream {
 	}
 }
 
+impl AsRawFd for Stream {
+	fn as_raw_fd(&self) -> RawFd {
+		match self {
+			Self::Unix(s) => s.as_raw_fd(),
+			Self::Tcp(s) => s.as_raw_fd(),
+		}
+	}
+}
+
 /// Structure listening for connections.
 pub struct Listener {
 	/// The Unix listener.
 	unix_listener: UnixListener,
-
 	/// The TCP listener.
 	tcp_listener: Option<TcpListener>,
+
+	/// The poll handler, used to waiting until something is to be done.
+	poll_handler: PollHandler,
 }
 
 impl Listener {
@@ -70,24 +86,34 @@ impl Listener {
 	/// - `tcp_port` is the port on which the . If network listening is not enabled, this argument
 	/// must be None.
 	pub fn new(unix_path: &str, tcp_port: Option<u16>) -> io::Result<Self> {
+		let mut poll_handler = PollHandler::new();
+
 		let unix_listener = UnixListener::bind(unix_path)?;
 		unix_listener.set_nonblocking(true)?;
+		poll_handler.add_fd(&unix_listener);
 
 		let tcp_listener = match tcp_port {
 			Some(tcp_port) => {
-				let listener = TcpListener::bind(format!("0.0.0.0:{}", tcp_port))?;
-				listener.set_nonblocking(true)?;
+				let tcp_listener = TcpListener::bind(format!("0.0.0.0:{}", tcp_port))?;
+				tcp_listener.set_nonblocking(true)?;
+				poll_handler.add_fd(&tcp_listener);
 
-				Some(listener)
+				Some(tcp_listener)
 			},
 			None => None,
 		};
 
 		Ok(Self {
 			unix_listener,
-
 			tcp_listener,
+
+			poll_handler,
 		})
+	}
+
+	/// Returns a mutable reference to the poll handler associated with the listener.
+	pub fn get_poll_handler(&mut self) -> &mut PollHandler {
+		&mut self.poll_handler
 	}
 
 	/// Accepts a new connection. This function is nonblocking and returns None if no new

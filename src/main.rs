@@ -3,6 +3,12 @@
 #![feature(linked_list_cursors)]
 #![feature(unix_socket_peek)]
 
+mod ctx;
+mod drm;
+mod net;
+mod protocol;
+mod util;
+
 use ctx::Context;
 use ctx::client::Client;
 use net::Listener;
@@ -10,12 +16,6 @@ use std::env;
 use std::process::exit;
 use std::thread;
 use std::time::Duration;
-
-mod ctx;
-mod drm;
-mod net;
-mod protocol;
-mod util;
 
 /// The release number.
 pub const RELEASE_NUMBER: u32 = 0;
@@ -90,20 +90,23 @@ fn main() {
 			None
 		}
 	};
-	let listener = Listener::new(&unix_path, tcp_port)
+	let mut listener = Listener::new(&unix_path, tcp_port)
 		.unwrap_or_else(| e | {
 			eprintln!("Cannot listen for incoming connections: {}", e);
 			exit(1);
 		});
 
 	loop {
+		// Waiting until something has to be done
+		listener.get_poll_handler().poll();
+
 		// TODO Add a maximum number of clients
 
 		// Accept a client
 		match listener.accept() {
 			Ok(Some(stream)) => {
 				let client = Client::new(stream);
-				ctx.add_client(client);
+				ctx.add_client(client, listener.get_poll_handler());
 			},
 
 			Ok(None) => {},
@@ -116,10 +119,8 @@ fn main() {
 		// TODO Listen for keyboard/mouse input
 
 		// Ticking clients
-		ctx.tick_clients();
+		ctx.tick_clients(listener.get_poll_handler());
 
 		// TODO Render if necessary
-
-		thread::sleep(Duration::from_millis(1));
 	}
 }

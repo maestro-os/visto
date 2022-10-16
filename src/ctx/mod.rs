@@ -6,6 +6,7 @@ pub mod window;
 
 use client::Client;
 use crate::drm;
+use crate::net::poll::PollHandler;
 use screen::Screen;
 use std::collections::LinkedList;
 use window::Window;
@@ -54,12 +55,17 @@ impl Context {
 	}
 
 	/// Adds a new client.
-	pub fn add_client(&mut self, client: Client) {
+	///
+	/// `poll_handler` is the poll handler on which the stream is to be registered.
+	pub fn add_client(&mut self, client: Client, poll_handler: &mut PollHandler) {
+		poll_handler.add_fd(client.get_stream());
 		self.clients.push_back(client);
 	}
 
 	/// Ticks every connected client.
-	pub fn tick_clients(&mut self) {
+	///
+	/// `poll_handler` is the poll handler on which the stream is to be registered.
+	pub fn tick_clients(&mut self, poll_handler: &mut PollHandler) {
 		let mut cursor = self.clients.cursor_front_mut();
 
 		while let Some(client) = cursor.current() {
@@ -68,7 +74,9 @@ impl Context {
 					// TODO rm?
 					println!("Client error: {}", e);
 
-					cursor.remove_current();
+					if let Some(removed) = cursor.remove_current() {
+						poll_handler.remove_fd(removed.get_stream());
+					}
 				},
 
 				_ => {},
