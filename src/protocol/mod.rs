@@ -233,6 +233,9 @@ pub struct Format {
 	pub bits_per_pixel: u8,
 	/// TODO doc
 	pub scanline_pad: u8,
+
+	/// Padding.
+	pub _padding: [u8; 5],
 }
 
 /// Structure representing a X screen.

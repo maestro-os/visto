@@ -1,7 +1,7 @@
 //! TODO doc
 
+use crate::ctx::Screen;
 use crate::net::Stream;
-use crate::protocol::Format;
 use crate::protocol::VENDOR_NAME;
 use crate::protocol::XRequest;
 use crate::protocol::connect::ClientConnect;
@@ -102,14 +102,23 @@ impl Client {
 	}
 
 	/// Writes a connect success message with the given reason.
-	pub fn write_connect_success(&mut self) -> io::Result<()> {
+	///
+	/// `screens` is the list of screens.
+	pub fn write_connect_success(&mut self, screens: &[Screen]) -> io::Result<()> {
 		println!("New client connection succeeded");
 		self.state = ClientState::ConnectSucess;
 
-		let additional_data_len = VENDOR_NAME.len()
+		let screens = screens.iter()
+			.map(| s | s.to_protocol_screen())
+			.collect::<Vec<Vec<u8>>>();
+		let screens_len: usize = screens.iter()
+			.map(| s | s.len())
+			.sum();
+
+		let additional_data_len = 32 + VENDOR_NAME.len()
 			+ pad(VENDOR_NAME.len())
-			+ 0 * size_of::<Format>() // TODO
-			+ 0; // TODO Size of screens
+			+ 1 * size_of::<protocol::Format>() // TODO
+			+ screens_len;
 
 		let msg = ConnectSuccess {
 			_padding0: 0,
@@ -126,7 +135,7 @@ impl Client {
 			vendor_length: VENDOR_NAME.len() as _,
 			max_request_length: (MAX_REQUEST_LEN / 4) as u16,
 			roots_screens_number: 0, // TODO
-			pixmap_formats_count: 0, // TODO
+			pixmap_formats_count: 1, // TODO
 			image_byte_order: 1, // MSB first
 
 			bitmap_format_bit_order: 0, // LSB first
@@ -140,32 +149,69 @@ impl Client {
 			_padding1: 0,
 		};
 
+		// TODO Get from screens
+		let format = protocol::Format {
+			depth: 24,
+			bits_per_pixel: 24,
+			scanline_pad: 0,
+
+			_padding: [0; 5],
+		};
+
 		let len = 1 + size_of::<ConnectSuccess>() + additional_data_len;
 		let mut buf = vec![0; len];
 
-		// Writing data in buffer
-		buf[0] = protocol::connect::SUCCESS;
+		let mut off = 0;
+
+		buf[off] = protocol::connect::SUCCESS;
+		off += 1;
+
 		unsafe {
 			ptr::copy_nonoverlapping::<u8>(
 				&msg as *const _ as *const _,
-				&mut buf[1],
+				&mut buf[off],
 				size_of::<ConnectSuccess>(),
 			);
+			off += size_of::<ConnectSuccess>();
+
+			let vendor_name = VENDOR_NAME.as_bytes();
 			ptr::copy_nonoverlapping::<u8>(
-				VENDOR_NAME.as_bytes().as_ptr(),
-				&mut buf[1 + size_of::<ConnectSuccess>()],
-				VENDOR_NAME.as_bytes().len(),
+				vendor_name.as_ptr(),
+				&mut buf[off],
+				vendor_name.len(),
 			);
-			// TODO Formats
-			// TODO Screens
+			off += vendor_name.len() + pad(vendor_name.len());
+			println!("=> {off} {:?}", &buf[..off]);
+
+			ptr::copy_nonoverlapping::<u8>(
+				&format as *const _ as *const u8,
+				&mut buf[off],
+				size_of::<protocol::Format>(),
+			);
+			off += size_of::<protocol::Format>();
 		}
+
+		for s in screens {
+			unsafe {
+				ptr::copy_nonoverlapping::<u8>(
+					s.as_ptr() as *const u8,
+					&mut buf[off],
+					s.len(),
+				);
+			}
+
+			off += s.len();
+		}
+		// TODO println!("-> {:?}", buf);
 
 		self.stream.write(buf.as_slice())?;
 		self.stream.flush()
 	}
 
 	/// Handles an incoming connect request, if any.
-	fn handle_connect_request(&mut self) -> io::Result<()> {
+	///
+	/// `screens` is the list of screens.
+	fn handle_connect_request(&mut self, screens: &[Screen]) -> io::Result<()> {
 		// Reading request header
 		let len = self.stream.peek(&mut self.buff)?;
 		if len < size_of::<ClientConnect>() {
@@ -211,7 +257,7 @@ impl Client {
 			return Ok(());
 		}
 
-		self.write_connect_success()
+		self.write_connect_success(screens)
 	}
 
 	/// Handles an incoming request, if any.
@@ -241,14 +287,16 @@ impl Client {
 	}
 
 	/// Ticks the client.
-	pub fn tick(&mut self) -> io::Result<()> {
+	///
+	/// `screens` is the list of screens.
+	pub fn tick(&mut self, screens: &[Screen]) -> io::Result<()> {
 		// TODO Delete the client if the socket is dead
 		// TODO Notify client of event if necessary
 
 		// Reading input data
 		match self.state {
 			ClientState::Waiting | ClientState::ConnectFailed => {
-				self.handle_connect_request()
+				self.handle_connect_request(screens)
 			},
 
 			ClientState::ConnectSucess => {

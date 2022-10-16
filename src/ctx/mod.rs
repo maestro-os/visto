@@ -74,7 +74,7 @@ impl Context {
 		let mut cursor = self.clients.cursor_front_mut();
 
 		while let Some(client) = cursor.current() {
-			match client.tick() {
+			match client.tick(&self.screens) {
 				Err(e) => {
 					println!("Client disconnect: {}", e);
 

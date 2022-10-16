@@ -59,8 +59,6 @@ impl Screen {
 
 	/// Returns the protocol representation of the screen.
 	pub fn to_protocol_screen(&self) -> Vec<u8> {
-		let mut data = vec![];
-
 		// Getting pixels width/height
 		let (pixels_width, pixels_height) = match &self.curr_mode {
 			Some(mode) => (mode.hdisplay, mode.vdisplay),
@@ -112,20 +110,30 @@ impl Screen {
 			allowed_depths_len: 1, // TODO
 		};
 
+		let len = size_of::<protocol::Screen>()
+			+ size_of::<protocol::Depth>()
+			+ size_of::<protocol::Visual>();
+		let mut data = vec![0; len];
+
+		let mut off = 0;
 		unsafe {
 			ptr::copy_nonoverlapping::<u8>(
 				&screen as *const _ as *const u8,
-				&mut data[0],
+				&mut data[off],
 				size_of::<protocol::Screen>()
 			);
+			off += size_of::<protocol::Screen>();
+
 			ptr::copy_nonoverlapping::<u8>(
 				&depth as *const _ as *const u8,
-				&mut data[size_of::<protocol::Screen>()],
+				&mut data[off],
 				size_of::<protocol::Depth>()
 			);
+			off += size_of::<protocol::Depth>();
+
 			ptr::copy_nonoverlapping::<u8>(
 				&visual as *const _ as *const u8,
-				&mut data[size_of::<protocol::Screen>() + size_of::<protocol::Depth>()],
+				&mut data[off],
 				size_of::<protocol::Visual>()
 			);
 		}
