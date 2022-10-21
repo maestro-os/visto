@@ -250,7 +250,7 @@ pub struct Screen {
 	/// TODO doc
 	pub black_pixel: u32,
 	/// TODO doc
-	pub current_input_masks: u8,
+	pub current_input_masks: u32,
 
 	/// The screen's width in pixels.
 	pub pixels_width: u16,

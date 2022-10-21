@@ -72,9 +72,9 @@ impl Screen {
 			bits_per_rgb_value: 24,
 			colormap_entries: 0, // TODO
 
-			red_mask: 0xff0000,
-			green_mask: 0x00ff00,
-			blue_mask: 0x0000ff,
+			red_mask: 0xff000000,
+			green_mask: 0x00ff0000,
+			blue_mask: 0x0000ff00,
 
 			_padding: 0,
 		};
@@ -136,6 +136,7 @@ impl Screen {
 				&mut data[off],
 				size_of::<protocol::Visual>()
 			);
+			off += size_of::<protocol::Visual>();
 		}
 
 		data

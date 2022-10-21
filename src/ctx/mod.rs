@@ -38,7 +38,8 @@ impl Context {
 		self.screens.clear();
 
 		for dev in drm::DRICard::scan() {
-			for conn in drm::DRIConnector::scan(&dev) {
+			// TODO Remove `take`
+			for conn in drm::DRIConnector::scan(&dev).into_iter().take(1) {
 				let root = Window::new_root();
 				self.windows.push(root);
 				let root_id = 0; // TODO

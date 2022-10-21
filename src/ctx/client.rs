@@ -115,9 +115,10 @@ impl Client {
 			.map(| s | s.len())
 			.sum();
 
-		let additional_data_len = 32 + VENDOR_NAME.len()
-			+ pad(VENDOR_NAME.len())
+		let additional_data_len = 32
 			+ 1 * size_of::<protocol::Format>() // TODO
+			+ VENDOR_NAME.len()
+			+ pad(VENDOR_NAME.len())
 			+ screens_len;
 
 		let msg = ConnectSuccess {
@@ -134,13 +135,13 @@ impl Client {
 			motion_buffer_size: 0, // TODO
 			vendor_length: VENDOR_NAME.len() as _,
 			max_request_length: (MAX_REQUEST_LEN / 4) as u16,
-			roots_screens_number: 0, // TODO
+			roots_screens_number: 1, // TODO
 			pixmap_formats_count: 1, // TODO
 			image_byte_order: 1, // MSB first
 
 			bitmap_format_bit_order: 0, // LSB first
-			bitmap_format_scanline_unit: 0, // TODO
-			bitmap_format_scanline_pad: 0, // TODO
+			bitmap_format_scanline_unit: 32, // TODO
+			bitmap_format_scanline_pad: 8, // TODO
 
 			min_keycode: 8,
 			max_keycode: 255,
@@ -151,9 +152,9 @@ impl Client {
 
 		// TODO Get from screens
 		let format = protocol::Format {
-			depth: 24,
+			depth: 32,
 			bits_per_pixel: 24,
-			scanline_pad: 0,
+			scanline_pad: 8,
 
 			_padding: [0; 5],
 		};
@@ -181,7 +182,6 @@ impl Client {
 				vendor_name.len(),
 			);
 			off += vendor_name.len() + pad(vendor_name.len());
-			println!("=> {off} {:?}", &buf[..off]);
 
 			ptr::copy_nonoverlapping::<u8>(
 				&format as *const _ as *const u8,
@@ -199,10 +199,8 @@ impl Client {
 					s.len(),
 				);
 			}
-
 			off += s.len();
 		}
-		// TODO println!("-> {:?}", buf);
 
 		self.stream.write(buf.as_slice())?;
 		self.stream.flush()
