@@ -43,11 +43,26 @@ impl Args {
 	}
 }
 
+/// Parses a display descriptor from the given string.
+fn parse_display(s: &str) -> Result<usize, String> {
+	if let Some(first) = s.chars().next() {
+		if first != ':' {
+			return Err(format!("Invalid display `{}`", s));
+		}
+	}
+
+	s[1..].parse::<usize>()
+		.map_err(|e| format!("Invalid display `{}`", s))
+}
+
 /// Parses command line arguments.
-fn parse_args() -> Args {
+fn parse_args() -> Result<Args, String> {
 	let mut args = Args::default();
 
-	// TODO Read environment variables
+	// Reading environment variables
+	if let Ok(disp) = env::var("DISPLAY") {
+		args.display = parse_display(&disp)?;
+	}
 
 	let iter = env::args().skip(1);
 	for arg in iter {
@@ -56,25 +71,24 @@ fn parse_args() -> Args {
 			"-nocursor" => args.cursor = false,
 
 			_ if matches!(arg.chars().next(), Some(':')) => {
-				args.display = arg[1..].parse::<usize>().unwrap_or_else(| _ | {
-					eprintln!("Invalid display `{}`", arg);
-					exit(1);
-				});
+				args.display = parse_display(&arg)?;
 			},
 
-			_ => {
-				eprintln!("Invalid argument `{}`", arg);
-				exit(1);
-			},
+			_ => return Err(format!("Invalid argument `{}`", arg)),
 		}
 	}
 
-	args
+	Ok(args)
 }
 
 fn main() {
 	// Parsing arguments
-	let args = parse_args();
+	let args = parse_args()
+		.unwrap_or_else(|e| {
+			eprintln!("error: {}", e);
+			exit(1);
+		}
+	);
 
 	// Creating context
 	let mut ctx = Context::new();
