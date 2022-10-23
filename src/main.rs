@@ -6,6 +6,7 @@
 mod atom;
 mod ctx;
 mod drm;
+mod extension;
 mod net;
 mod protocol;
 mod util;
@@ -14,6 +15,7 @@ use ctx::Context;
 use ctx::client::Client;
 use net::Listener;
 use std::env;
+use std::path::Path;
 use std::process::exit;
 
 /// The release number.
@@ -85,10 +87,16 @@ fn main() {
 	// Parsing arguments
 	let args = parse_args()
 		.unwrap_or_else(|e| {
-			eprintln!("error: {}", e);
+			eprintln!("error parsing arguments: {}", e);
 			exit(1);
-		}
-	);
+		});
+
+	// Reading extensions list
+	extension::load_extensions_list(Path::new(extension::LIST_PATH))
+		.unwrap_or_else(|e| {
+			eprintln!("error reading extensions list: {}", e);
+			exit(1);
+		});
 
 	// Creating context
 	let mut ctx = Context::new();

@@ -60,7 +60,7 @@ pub fn read(buff: &[u8]) -> Result<Option<(Box<dyn Request>, usize)>, Box<dyn Er
 			.map(|r| Box::new(r) as Box<dyn Request>),
 
 		_ => {
-			// TODO Add support for extentions
+			// TODO Add support for extensions
 			// TODO Handle invalid opcodes
 
 			todo!();

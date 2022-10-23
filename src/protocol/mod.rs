@@ -23,13 +23,6 @@ pub struct XRequest {
 	pub length: u16,
 }
 
-/// The header of a reply.
-#[repr(C, packed)]
-pub struct XReply {
-	/// The total length of the reply, including the header, in units of 4 bytes.
-	length: u16,
-}
-
 // TODO XError
 // TODO XEvent
 

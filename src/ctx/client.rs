@@ -17,7 +17,9 @@ use std::io::Read;
 use std::io::Write;
 use std::io;
 use std::mem::size_of;
+use std::num::Wrapping;
 use std::ptr;
+use std::slice;
 
 /// The state of a client.
 pub enum ClientState {
@@ -25,7 +27,7 @@ pub enum ClientState {
 	Waiting,
 
 	/// Connection succeeded.
-	ConnectSucess,
+	ConnectSuccess,
 	/// Connection failed.
 	ConnectFailed,
 }
@@ -42,6 +44,9 @@ pub struct Client {
 
 	/// Tells whether the client works in MSB first.
 	msb_first: bool,
+
+	/// The last sequence number.
+	sequence_number: Wrapping<u16>,
 }
 
 impl Client {
@@ -54,12 +59,29 @@ impl Client {
 			state: ClientState::Waiting,
 
 			msb_first: false,
+
+			sequence_number: Wrapping(0),
 		}
 	}
 
 	/// Returns an immutable reference to the stream associated with the client.
 	pub fn get_stream(&self) -> &Stream {
 		&self.stream
+	}
+	/// Returns the next sequence number.
+	pub fn next_sequence_number(&mut self) -> u16 {
+		self.sequence_number += 1;
+		self.sequence_number.0
+	}
+
+	/// Writes the given object.
+	pub fn write<T>(&mut self, obj: &T) -> io::Result<()> {
+		let slice = unsafe {
+			slice::from_raw_parts(obj as *const _ as *const u8, size_of::<T>())
+		};
+
+		self.stream.write(slice)?;
+		self.stream.flush()
 	}
 
 	/// Writes a connect failed message with the given reason.
@@ -106,7 +128,7 @@ impl Client {
 	/// `screens` is the list of screens.
 	pub fn write_connect_success(&mut self, screens: &[Screen]) -> io::Result<()> {
 		println!("New client connection succeeded");
-		self.state = ClientState::ConnectSucess;
+		self.state = ClientState::ConnectSuccess;
 
 		let screens = screens.iter()
 			.map(| s | s.to_protocol_screen())
@@ -265,13 +287,17 @@ impl Client {
 		if len < size_of::<XRequest>() {
 			return Ok(());
 		}
+		println!("len {}", len);
 
 		if let Some((request, len)) = request::read(&self.buff[..len])? {
+			println!("len2 {}", len);
 			// Discard remaining bytes
 			self.stream.read(&mut self.buff[..len])?;
+			println!("A");
 
 			// Handle the request
 			request.handle(self)?;
+			println!("B");
 		}
 
 		Ok(())
@@ -289,7 +315,7 @@ impl Client {
 				self.handle_connect_request(screens)?;
 			},
 
-			ClientState::ConnectSucess => {
+			ClientState::ConnectSuccess => {
 				self.handle_request()?;
 			},
 		}
