@@ -52,7 +52,7 @@ fn parse_display(s: &str) -> Result<usize, String> {
 	}
 
 	s[1..].parse::<usize>()
-		.map_err(|e| format!("Invalid display `{}`", s))
+		.map_err(|_| format!("Invalid display `{}`", s))
 }
 
 /// Parses command line arguments.

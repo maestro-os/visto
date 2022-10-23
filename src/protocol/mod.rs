@@ -1,6 +1,8 @@
 //! This module implements the X protocol.
 
 pub mod connect;
+pub mod opcode;
+pub mod request;
 
 /// Major version of the protocol.
 pub const MAJOR_VERSION: u16 = 11;

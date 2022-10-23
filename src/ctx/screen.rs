@@ -136,7 +136,6 @@ impl Screen {
 				&mut data[off],
 				size_of::<protocol::Visual>()
 			);
-			off += size_of::<protocol::Visual>();
 		}
 
 		data

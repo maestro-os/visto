@@ -325,14 +325,14 @@ impl DRIConnector {
 		};
 
 		if conn.count_encoders > 0 {
-			conn.encoders_ptr = connector.encoders.as_ptr() as _;
+			conn.encoders_ptr = connector.encoders.as_mut_ptr() as _;
 		}
 		if conn.count_modes > 0 {
-			conn.modes_ptr = connector.modes.as_ptr() as _;
+			conn.modes_ptr = connector.modes.as_mut_ptr() as _;
 		}
 		if conn.count_props > 0 {
-			conn.props_ptr = connector.props.as_ptr() as _;
-			conn.prop_values_ptr = connector.prop_values.as_ptr() as _;
+			conn.props_ptr = connector.props.as_mut_ptr() as _;
+			conn.prop_values_ptr = connector.prop_values.as_mut_ptr() as _;
 		}
 
 		let res = unsafe {

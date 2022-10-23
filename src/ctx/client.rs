@@ -8,16 +8,16 @@ use crate::protocol::connect::ClientConnect;
 use crate::protocol::connect::ConnectFailed;
 use crate::protocol::connect::ConnectSuccess;
 use crate::protocol::pad;
+use crate::protocol::request::MAX_REQUEST_LEN;
+use crate::protocol::request;
 use crate::protocol;
 use crate::util;
+use std::error::Error;
 use std::io::Read;
 use std::io::Write;
 use std::io;
 use std::mem::size_of;
 use std::ptr;
-
-/// The maximum length of a request.
-const MAX_REQUEST_LEN: usize = 1 << 16; // TODO Increase?
 
 /// The state of a client.
 pub enum ClientState {
@@ -259,27 +259,20 @@ impl Client {
 	}
 
 	/// Handles an incoming request, if any.
-	fn handle_request(&mut self) -> io::Result<()> {
+	fn handle_request(&mut self) -> Result<(), Box<dyn Error>> {
 		// Reading request header
 		let len = self.stream.peek(&mut self.buff)?;
 		if len < size_of::<XRequest>() {
 			return Ok(());
 		}
-		let hdr: &XRequest = unsafe {
-			util::reinterpret(&self.buff[0])
-		};
 
-		// If not enough bytes are available, return
-		let required_len = size_of::<XRequest>(); // TODO
-		if len < required_len {
-			return Ok(());
+		if let Some((request, len)) = request::read(&self.buff[..len])? {
+			// Discard remaining bytes
+			self.stream.read(&mut self.buff[..len])?;
+
+			// Handle the request
+			request.handle(self)?;
 		}
-		// Discard remaining bytes
-		self.stream.read(&mut self.buff[..required_len])?;
-
-		// TODO
-		let opcode = hdr.major_opcode;
-		println!("=> {}", opcode);
 
 		Ok(())
 	}
@@ -287,19 +280,20 @@ impl Client {
 	/// Ticks the client.
 	///
 	/// `screens` is the list of screens.
-	pub fn tick(&mut self, screens: &[Screen]) -> io::Result<()> {
-		// TODO Delete the client if the socket is dead
+	pub fn tick(&mut self, screens: &[Screen]) -> Result<(), Box<dyn Error>> {
 		// TODO Notify client of event if necessary
 
 		// Reading input data
 		match self.state {
 			ClientState::Waiting | ClientState::ConnectFailed => {
-				self.handle_connect_request(screens)
+				self.handle_connect_request(screens)?;
 			},
 
 			ClientState::ConnectSucess => {
-				self.handle_request()
+				self.handle_request()?;
 			},
 		}
+
+		Ok(())
 	}
 }

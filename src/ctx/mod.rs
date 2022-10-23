@@ -76,6 +76,7 @@ impl Context {
 
 		while let Some(client) = cursor.current() {
 			match client.tick(&self.screens) {
+				// On error, remove client
 				Err(e) => {
 					println!("Client disconnect: {}", e);
 
