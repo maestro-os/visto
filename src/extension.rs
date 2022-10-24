@@ -36,7 +36,8 @@ pub fn load_extensions_list(path: &Path) -> Result<(), Box<dyn Error>> {
 	};
 
 	// TODO Use a format different than JSON to allow appending with shell redirections (>>)
-	*EXTENSIONS.lock().unwrap() = serde_json::from_str(&content)?;
+	*EXTENSIONS.lock()
+		.unwrap() = serde_json::from_str(&content)?;
 	Ok(())
 }
 
@@ -46,7 +47,8 @@ pub struct Extension {
 	/// The name of the extension.
 	name: String,
 
-	// TODO Shared library instance
+	/// The loaded shared library.
+	lib: libloading::Library,
 
 	/// Major opcode allocated to the extension.
 	major_opcode: u8,
@@ -58,9 +60,33 @@ pub struct Extension {
 
 impl Extension {
 	/// Loads the extentions with the given name and path.
-	pub fn load(_name: String, _path: &Path) -> Result<Arc<Mutex<Self>>, Box<dyn Error>> {
-		// TODO
-		todo!();
+	pub fn load(name: String, path: &Path) -> Result<Arc<Mutex<Self>>, Box<dyn Error>> {
+		let lib = unsafe {
+			libloading::Library::new(path)
+		}?;
+		let success = unsafe {
+			let init_func: libloading::Symbol<unsafe extern fn() -> bool> = lib.get(b"init")?;
+			init_func()
+		};
+		if !success {
+			// TODO Error
+			todo!();
+		}
+
+		let ext = Self {
+			name: name.clone(),
+
+			lib,
+
+			major_opcode: 0, // TODO
+			first_event: 0, // TODO
+			first_error: 0, // TODO
+		};
+
+		LOADED_EXTENSIONS.lock()
+			.unwrap()
+			.insert(name.clone(), Arc::new(Mutex::new(ext)));
+		Ok(Self::get(&name).unwrap())
 	}
 
 	/// Returns the extension with the given name.
@@ -86,6 +112,23 @@ impl Extension {
 	/// Returns the first error allocated to the extension.
 	pub fn get_first_error(&self) -> u8 {
 		self.first_error
+	}
+}
+
+impl Drop for Extension {
+	fn drop(&mut self) {
+		let fini_func: Result<libloading::Symbol<unsafe extern fn()>, _> = unsafe {
+			self.lib.get(b"fini")
+		};
+		if let Ok(fini_func) = fini_func {
+			unsafe {
+				fini_func();
+			}
+		}
+
+		// TODO Free major opcode
+		// TODO Free first event
+		// TODO Free first error
 	}
 }
 
