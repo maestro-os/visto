@@ -287,17 +287,13 @@ impl Client {
 		if len < size_of::<XRequest>() {
 			return Ok(());
 		}
-		println!("len {}", len);
 
 		if let Some((request, len)) = request::read(&self.buff[..len])? {
-			println!("len2 {}", len);
 			// Discard remaining bytes
 			self.stream.read(&mut self.buff[..len])?;
-			println!("A");
 
 			// Handle the request
 			request.handle(self)?;
-			println!("B");
 		}
 
 		Ok(())

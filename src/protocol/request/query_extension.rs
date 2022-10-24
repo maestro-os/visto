@@ -30,7 +30,7 @@ struct QueryExtensionReply {
 	/// Sequence number.
 	seq_nbr: u16,
 	/// The length of the reply.
-	reply_length: u32, // TODO Check if in units of 4 bytes
+	reply_length: u32,
 
 	/// Tells whether the extension is present.
 	present: u8,
@@ -78,19 +78,38 @@ impl Request for QueryExtension {
 
 	fn handle(&self, client: &mut Client) -> Result<(), Box<dyn Error>> {
 		let seq_nbr = client.next_sequence_number();
-		let present = extension::query(&self.name)?;
+
+		let ext = extension::query(&self.name)?;
+		let present = ext.is_some();
+
+		let (
+			major_opcode,
+			first_event,
+			first_error,
+		) = match ext {
+			Some(ext) => {
+				let ext = ext.lock().unwrap();
+
+				(
+					ext.get_major_opcode(),
+					ext.get_first_event(),
+					ext.get_first_error(),
+				)
+			},
+
+			None => (0, 0, 0),
+		};
 
 		let reply = QueryExtensionReply {
 			type_: 1, // TODO Use constant
 			_padding0: 0,
 			seq_nbr,
-			// TODO Check if in units of 4 bytes
-			reply_length: size_of::<QueryExtensionReply>() as _,
+			reply_length: 0,
 
 			present: if present { 1 } else { 0 },
-			major_opcode: 0, // TODO Allocated for extension
-			first_event: 0, // TODO Allocated for extension
-			first_error: 0, // TODO Allocated for extension
+			major_opcode,
+			first_event,
+			first_error,
 
 			_padding1: [0; 20],
 		};
