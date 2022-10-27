@@ -3,6 +3,16 @@ name = "visto"
 version = "0.1.0"
 edition = "2021"
 
+# Compiled as a library to allow extensions to access the server's interface
+[lib]
+name = "visto"
+path = "src/main.rs"
+crate-type = ["dylib"]
+
+[[bin]]
+name = "visto"
+path = "src/main.rs"
+
 [dependencies]
 lazy_static = "1.4.0"
 libc = "^0.2"

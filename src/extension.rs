@@ -10,15 +10,17 @@ use std::error::Error;
 use std::fs;
 use std::io;
 use std::path::Path;
+use std::path::PathBuf;
 use std::sync::Arc;
 use std::sync::Mutex;
 
 /// The path to the list of extensions.
-pub const LIST_PATH: &str = "extensions.json"; // TODO
+pub const LIST_PATH: &str = "extensions"; // TODO
 
 lazy_static! {
-	/// The list of extensions.
-	static ref EXTENSIONS: Mutex<HashMap<String, String>> = Mutex::new(HashMap::new());
+	/// The list of extensions. The key is the name of the extension and the value is the path to
+	/// it.
+	static ref EXTENSIONS: Mutex<HashMap<String, PathBuf>> = Mutex::new(HashMap::new());
 
 	/// The list of loaded extensions, by name.
 	static ref LOADED_EXTENSIONS: Mutex<HashMap<String, Arc<Mutex<Extension>>>>
@@ -35,9 +37,24 @@ pub fn load_extensions_list(path: &Path) -> Result<(), Box<dyn Error>> {
 		Ok(c) => c,
 	};
 
-	// TODO Use a format different than JSON to allow appending with shell redirections (>>)
-	*EXTENSIONS.lock()
-		.unwrap() = serde_json::from_str(&content)?;
+	let mut exts = EXTENSIONS.lock().unwrap();
+	exts.clear();
+
+	// TODO Handle comments
+	for line in content.split('\n') {
+		let line = line.trim();
+		if line.is_empty() {
+			continue;
+		}
+
+		if let Some((name, path)) = line.split_once(',') {
+			exts.insert(name.to_owned(), PathBuf::from(path));
+		} else {
+			exts.clear();
+			return Err(format!("Invalid extension entry `{}`", line).into());
+		}
+	}
+
 	Ok(())
 }
 

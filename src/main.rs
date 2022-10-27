@@ -3,13 +3,13 @@
 #![feature(linked_list_cursors)]
 #![feature(unix_socket_peek)]
 
-mod atom;
-mod ctx;
-mod drm;
-mod extension;
-mod net;
-mod protocol;
-mod util;
+pub mod atom;
+pub mod ctx;
+pub mod drm;
+pub mod extension;
+pub mod net;
+pub mod protocol;
+pub mod util;
 
 use ctx::Context;
 use ctx::client::Client;
