@@ -79,7 +79,10 @@ impl Request for QueryExtension {
 	fn handle(&self, client: &mut Client) -> Result<(), Box<dyn Error>> {
 		let seq_nbr = client.next_sequence_number();
 
-		let ext = extension::query(&self.name)?;
+		let ext = extension::query(&self.name).unwrap_or_else(|e| {
+			eprintln!("Couldn't load extension `{}`: {}", self.name, e);
+			None
+		});
 		let present = ext.is_some();
 
 		let (

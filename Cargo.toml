@@ -2,6 +2,7 @@
 
 members = [
 	"server",
+	"big-request",
 ]
 
 [profile.release]

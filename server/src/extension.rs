@@ -81,14 +81,6 @@ impl Extension {
 		let lib = unsafe {
 			libloading::Library::new(path)
 		}?;
-		let success = unsafe {
-			let init_func: libloading::Symbol<unsafe extern fn() -> bool> = lib.get(b"init")?;
-			init_func()
-		};
-		if !success {
-			// TODO Error
-			todo!();
-		}
 
 		let ext = Self {
 			name: name.clone(),
@@ -99,6 +91,15 @@ impl Extension {
 			first_event: 0, // TODO
 			first_error: 0, // TODO
 		};
+
+		let success = unsafe {
+			let init_func: libloading::Symbol<extern fn(&Self) -> bool> = ext.lib.get(b"init")?;
+			init_func(&ext)
+		};
+		if !success {
+			// TODO Error
+			todo!();
+		}
 
 		LOADED_EXTENSIONS.lock()
 			.unwrap()
@@ -134,7 +135,7 @@ impl Extension {
 
 impl Drop for Extension {
 	fn drop(&mut self) {
-		let fini_func: Result<libloading::Symbol<unsafe extern fn()>, _> = unsafe {
+		let fini_func: Result<libloading::Symbol<extern fn()>, _> = unsafe {
 			self.lib.get(b"fini")
 		};
 		if let Ok(fini_func) = fini_func {

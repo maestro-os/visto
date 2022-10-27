@@ -8,8 +8,9 @@ use crate::protocol::connect::ClientConnect;
 use crate::protocol::connect::ConnectFailed;
 use crate::protocol::connect::ConnectSuccess;
 use crate::protocol::pad;
+use crate::protocol::request::DefaultRequestReader;
 use crate::protocol::request::MAX_REQUEST_LEN;
-use crate::protocol::request;
+use crate::protocol::request::RequestReader;
 use crate::protocol;
 use crate::util;
 use std::error::Error;
@@ -47,6 +48,10 @@ pub struct Client {
 
 	/// The last sequence number.
 	sequence_number: Wrapping<u16>,
+
+	/// The current request reader. Changing this value allows to change the behaviour when reading
+	/// requests.
+	request_reader: Box<dyn RequestReader>,
 }
 
 impl Client {
@@ -61,6 +66,8 @@ impl Client {
 			msb_first: false,
 
 			sequence_number: Wrapping(0),
+
+			request_reader: Box::new(DefaultRequestReader {}),
 		}
 	}
 
@@ -288,7 +295,7 @@ impl Client {
 			return Ok(());
 		}
 
-		if let Some((request, len)) = request::read(&self.buff[..len])? {
+		if let Some((request, len)) = self.request_reader.read(&self.buff[..len])? {
 			// Discard remaining bytes
 			self.stream.read(&mut self.buff[..len])?;
 
