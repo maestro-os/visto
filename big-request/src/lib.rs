@@ -1,7 +1,14 @@
 //! Extension `BIG-REQUEST` allows to increase the size of requests by modifying the header.
 
+use std::error::Error;
+use std::mem::size_of;
+use visto::ctx::Context;
 use visto::extension::Extension;
+use visto::protocol::XRequest;
+use visto::protocol::request::MAX_REQUEST_LEN;
+use visto::protocol::request::Request;
 use visto::protocol::request::RequestReader;
+use visto::util;
 
 /// The big request header.
 #[repr(C, packed)]
@@ -20,7 +27,7 @@ impl RequestReader for BigRequestReader {
 	fn read(&self, buff: &[u8]) -> Result<Option<(Box<dyn Request>, usize)>, Box<dyn Error>> {
 		// If not enough bytes are available, return
 		let mut hdr_len = size_of::<XRequest>();
-		if buff.len() < req {
+		if buff.len() < hdr_len {
 			return Ok(None);
 		}
 
@@ -61,8 +68,10 @@ impl RequestReader for BigRequestReader {
 }
 
 #[no_mangle]
-pub extern fn init(ext: &Extension) -> bool {
-	// TODO
+pub extern fn init(ctx: &mut Context, ext: &Extension) -> bool {
+	// TODO Allocate major opcode
+	// TODO Register request
+
 	true
 }
 

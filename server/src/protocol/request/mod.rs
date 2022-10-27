@@ -2,11 +2,11 @@
 
 pub mod query_extension;
 
-use query_extension::QueryExtension;
-
+use crate::ctx::Context;
 use crate::ctx::client::Client;
 use crate::protocol::XRequest;
 use crate::util;
+use query_extension::QueryExtension;
 use std::error::Error;
 use std::mem::size_of;
 use super::opcode::Opcode;
@@ -20,7 +20,9 @@ pub trait Request {
 	fn read(buff: &[u8]) -> Result<Option<Self>, Box<dyn Error>> where Self: Sized;
 
 	/// Handles the request for the given client.
-	fn handle(&self, client: &mut Client) -> Result<(), Box<dyn Error>>;
+	///
+	/// `ctx` is the current context.
+	fn handle(&self, ctx: &mut Context, client: &mut Client) -> Result<(), Box<dyn Error>>;
 }
 
 /// Trait representing an object used to read a request.

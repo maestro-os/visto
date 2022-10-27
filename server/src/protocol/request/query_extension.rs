@@ -1,5 +1,6 @@
 //! The QueryExtension request allows to ask for an extention to be loaded.
 
+use crate::ctx::Context;
 use crate::ctx::client::Client;
 use crate::extension;
 use crate::protocol::pad;
@@ -76,10 +77,10 @@ impl Request for QueryExtension {
 		}))
 	}
 
-	fn handle(&self, client: &mut Client) -> Result<(), Box<dyn Error>> {
+	fn handle(&self, ctx: &mut Context, client: &mut Client) -> Result<(), Box<dyn Error>> {
 		let seq_nbr = client.next_sequence_number();
 
-		let ext = extension::query(&self.name).unwrap_or_else(|e| {
+		let ext = extension::query(ctx, &self.name).unwrap_or_else(|e| {
 			eprintln!("Couldn't load extension `{}`: {}", self.name, e);
 			None
 		});

@@ -1,5 +1,6 @@
 //! TODO doc
 
+use crate::ctx::Context;
 use crate::ctx::Screen;
 use crate::net::Stream;
 use crate::protocol::VENDOR_NAME;
@@ -288,7 +289,9 @@ impl Client {
 	}
 
 	/// Handles an incoming request, if any.
-	fn handle_request(&mut self) -> Result<(), Box<dyn Error>> {
+	///
+	/// `ctx` is the current context.
+	fn handle_request(&mut self, ctx: &mut Context) -> Result<(), Box<dyn Error>> {
 		// Reading request header
 		let len = self.stream.peek(&mut self.buff)?;
 		if len < size_of::<XRequest>() {
@@ -300,7 +303,7 @@ impl Client {
 			self.stream.read(&mut self.buff[..len])?;
 
 			// Handle the request
-			request.handle(self)?;
+			request.handle(ctx, self)?;
 		}
 
 		Ok(())
@@ -308,18 +311,18 @@ impl Client {
 
 	/// Ticks the client.
 	///
-	/// `screens` is the list of screens.
-	pub fn tick(&mut self, screens: &[Screen]) -> Result<(), Box<dyn Error>> {
+	/// `ctx` is the current context.
+	pub fn tick(&mut self, ctx: &mut Context) -> Result<(), Box<dyn Error>> {
 		// TODO Notify client of event if necessary
 
 		// Reading input data
 		match self.state {
 			ClientState::Waiting | ClientState::ConnectFailed => {
-				self.handle_connect_request(screens)?;
+				self.handle_connect_request(&ctx.screens)?;
 			},
 
 			ClientState::ConnectSuccess => {
-				self.handle_request()?;
+				self.handle_request(ctx)?;
 			},
 		}
 

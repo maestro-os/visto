@@ -4,6 +4,7 @@
 //!
 //! A file allows to specify associations names to shared libraries.
 
+use crate::ctx::Context;
 use lazy_static::lazy_static;
 use std::collections::HashMap;
 use std::error::Error;
@@ -77,7 +78,13 @@ pub struct Extension {
 
 impl Extension {
 	/// Loads the extentions with the given name and path.
-	pub fn load(name: String, path: &Path) -> Result<Arc<Mutex<Self>>, Box<dyn Error>> {
+	///
+	/// `ctx` is the current context.
+	pub fn load(
+		ctx: &mut Context,
+		name: String,
+		path: &Path,
+	) -> Result<Arc<Mutex<Self>>, Box<dyn Error>> {
 		let lib = unsafe {
 			libloading::Library::new(path)
 		}?;
@@ -92,11 +99,10 @@ impl Extension {
 			first_error: 0, // TODO
 		};
 
-		let success = unsafe {
-			let init_func: libloading::Symbol<extern fn(&Self) -> bool> = ext.lib.get(b"init")?;
-			init_func(&ext)
-		};
-		if !success {
+		let init_func = unsafe {
+			ext.lib.get::<libloading::Symbol<extern fn(&mut Context, &Self) -> bool>>(b"init")
+		}?;
+		if !init_func(ctx, &ext) {
 			// TODO Error
 			todo!();
 		}
@@ -139,9 +145,7 @@ impl Drop for Extension {
 			self.lib.get(b"fini")
 		};
 		if let Ok(fini_func) = fini_func {
-			unsafe {
-				fini_func();
-			}
+			fini_func();
 		}
 
 		// TODO Free major opcode
@@ -152,9 +156,14 @@ impl Drop for Extension {
 
 /// Queries for the extension with the given name.
 ///
+/// `ctx` is the current context.
+///
 /// If not loaded, the function tries to load the module with the given name.
 /// If the extension doesn't exist, the function returns None.
-pub fn query(name: &str) -> Result<Option<Arc<Mutex<Extension>>>, Box<dyn Error>> {
+pub fn query(
+	ctx: &mut Context,
+	name: &str,
+) -> Result<Option<Arc<Mutex<Extension>>>, Box<dyn Error>> {
 	if let Some(ext) = Extension::get(name) {
 		return Ok(Some(ext));
 	}
@@ -162,7 +171,7 @@ pub fn query(name: &str) -> Result<Option<Arc<Mutex<Extension>>>, Box<dyn Error>
 	match EXTENSIONS.lock().unwrap().get(name) {
 		Some(ext_path) => {
 			// Loading the extension
-			let ext = Extension::load(name.to_owned(), Path::new(ext_path))?;
+			let ext = Extension::load(ctx, name.to_owned(), Path::new(ext_path))?;
 			Ok(Some(ext))
 		},
 

@@ -8,6 +8,7 @@ use client::Client;
 use crate::drm;
 use crate::net::poll::PollHandler;
 use screen::Screen;
+use std::cell::UnsafeCell;
 use std::collections::LinkedList;
 use window::Window;
 
@@ -19,7 +20,8 @@ pub struct Context {
 	windows: Vec<Window>,
 
 	/// The list of clients.
-	clients: LinkedList<Client>,
+	/// An unsafe cell is used to allow double borrow of the context.
+	clients: UnsafeCell<LinkedList<Client>>,
 }
 
 impl Context {
@@ -29,7 +31,7 @@ impl Context {
 			screens: Vec::new(),
 			windows: Vec::new(),
 
-			clients: LinkedList::new(),
+			clients: UnsafeCell::new(LinkedList::new()),
 		}
 	}
 
@@ -65,17 +67,22 @@ impl Context {
 	/// `poll_handler` is the poll handler on which the stream is to be registered.
 	pub fn add_client(&mut self, client: Client, poll_handler: &mut PollHandler) {
 		poll_handler.add_fd(client.get_stream());
-		self.clients.push_back(client);
+
+		unsafe {
+			(*self.clients.get()).push_back(client);
+		}
 	}
 
 	/// Ticks every connected client.
 	///
 	/// `poll_handler` is the poll handler on which the stream is to be registered.
 	pub fn tick_clients(&mut self, poll_handler: &mut PollHandler) {
-		let mut cursor = self.clients.cursor_front_mut();
+		let mut cursor = unsafe {
+			(*self.clients.get()).cursor_front_mut()
+		};
 
 		while let Some(client) = cursor.current() {
-			match client.tick(&self.screens) {
+			match client.tick(self) {
 				// On error, remove client
 				Err(e) => {
 					println!("Client disconnect: {}", e);
