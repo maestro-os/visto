@@ -1,5 +1,7 @@
 //! Extension `BIG-REQUEST` allows to increase the size of requests by modifying the header.
 
+mod big_req_enable;
+
 use std::error::Error;
 use std::mem::size_of;
 use visto::ctx::Context;
@@ -8,6 +10,7 @@ use visto::protocol::XRequest;
 use visto::protocol::request::MAX_REQUEST_LEN;
 use visto::protocol::request::Request;
 use visto::protocol::request::RequestReader;
+use visto::protocol::request;
 use visto::util;
 
 /// The big request header.
@@ -24,7 +27,11 @@ struct BigRequestHdr {
 pub struct BigRequestReader {}
 
 impl RequestReader for BigRequestReader {
-	fn read(&self, buff: &[u8]) -> Result<Option<(Box<dyn Request>, usize)>, Box<dyn Error>> {
+	fn read(
+		&self,
+		ctx: &Context,
+		buff: &[u8],
+	) -> Result<Option<(Box<dyn Request>, usize)>, Box<dyn Error>> {
 		// If not enough bytes are available, return
 		let mut hdr_len = size_of::<XRequest>();
 		if buff.len() < hdr_len {
@@ -61,7 +68,7 @@ impl RequestReader for BigRequestReader {
 		let opcode = hdr.major_opcode;
 		let buff = &buff[hdr_len..];
 
-		let request = self.handle(opcode, buff)?;
+		let request = request::build_request(ctx, opcode, buff)?;
 		Ok(request.map(|r| (r, req)))
 
 	}
@@ -69,14 +76,11 @@ impl RequestReader for BigRequestReader {
 
 #[no_mangle]
 pub extern fn init(ctx: &mut Context, ext: &Extension) -> bool {
-	// TODO Allocate major opcode
-	// TODO Register request
-
+	ctx.get_custom_requests_mut().insert(ext.get_major_opcode(), Box::new(&big_req_enable::read));
 	true
 }
 
 #[no_mangle]
 pub extern fn fini() {
-	// TODO
-	todo!();
+	// TODO Unregister request
 }

@@ -1,12 +1,14 @@
 //! TODO doc
 
 #![feature(linked_list_cursors)]
+#![feature(step_trait)]
 #![feature(unix_socket_peek)]
 
 pub mod atom;
 pub mod ctx;
 pub mod drm;
 pub mod extension;
+pub mod id_allocator;
 pub mod net;
 pub mod protocol;
 pub mod util;

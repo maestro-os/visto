@@ -6,7 +6,6 @@ use crate::ctx::Context;
 use crate::ctx::client::Client;
 use crate::protocol::XRequest;
 use crate::util;
-use query_extension::QueryExtension;
 use std::error::Error;
 use std::mem::size_of;
 
@@ -254,11 +253,45 @@ pub const NO_OPERATION: u8 = 127;
 /// The maximum length of a request in bytes.
 pub const MAX_REQUEST_LEN: usize = 1 << 16; // TODO Increase
 
+/// A request with the given opcode and buffer.
+///
+/// Arguments:
+/// - `ctx` is the current context.
+/// - `opcode` is the request's opcode.
+/// - `buff` is the body of the request.
+///
+/// If the opcode is not assigned, the function returns None.
+pub fn build_request(
+	ctx: &Context,
+	opcode: u8,
+	buff: &[u8],
+) -> Result<Option<Box<dyn Request>>, Box<dyn Error>> {
+	// TODO rm
+	println!("=> {}", opcode);
+
+	match ctx.get_custom_requests().get(&opcode) {
+		Some(f) => return f(buff),
+		None => {},
+	}
+
+	let request = match opcode {
+		// TODO
+
+		QUERY_EXTENSION => query_extension::read(buff)?
+			.map(|r| Box::new(r) as Box<dyn Request>),
+
+		_ => None
+	};
+
+	Ok(request)
+}
+
+/// A function to call to read a function of a specific type.
+/// Each request type has its own function.
+pub type RequestReadFn = dyn Fn(&[u8]) -> Result<Option<Box<dyn Request>>, Box<dyn Error>>;
+
 /// Trait representing a request.
 pub trait Request {
-	/// Parses the request from the given buffer.
-	fn read(buff: &[u8]) -> Result<Option<Self>, Box<dyn Error>> where Self: Sized;
-
 	/// Handles the request for the given client.
 	///
 	/// `ctx` is the current context.
@@ -269,38 +302,24 @@ pub trait Request {
 pub trait RequestReader {
 	/// Reads a request from the given buffer.
 	/// If not enough data is present in the buffer, the function returns None.
-	fn read(&self, buff: &[u8]) -> Result<Option<(Box<dyn Request>, usize)>, Box<dyn Error>>;
-
-	/// Handles a request with the given opcode.
 	///
-	/// `buff` is the body of the request.
-	fn handle(&self, opcode: u8, buff: &[u8]) -> Result<Option<Box<dyn Request>>, Box<dyn Error>> {
-		// TODO rm
-		println!("=> {}", opcode);
-
-		let request = match opcode {
-			// TODO
-
-			QUERY_EXTENSION => QueryExtension::read(buff)?
-				.map(|r| Box::new(r) as Box<dyn Request>),
-
-			_ => {
-				// TODO Add support for extensions
-				// TODO Handle invalid opcodes
-
-				todo!();
-			}
-		};
-
-		Ok(request)
-	}
+	/// `ctx` is the current context.
+	fn read(
+		&self,
+		ctx: &Context,
+		buff: &[u8],
+	) -> Result<Option<(Box<dyn Request>, usize)>, Box<dyn Error>>;
 }
 
 /// The default request reader.
 pub struct DefaultRequestReader {}
 
 impl RequestReader for DefaultRequestReader {
-	fn read(&self, buff: &[u8]) -> Result<Option<(Box<dyn Request>, usize)>, Box<dyn Error>> {
+	fn read(
+		&self,
+		ctx: &Context,
+		buff: &[u8],
+	) -> Result<Option<(Box<dyn Request>, usize)>, Box<dyn Error>> {
 		// If not enough bytes are available, return
 		let hdr_len = size_of::<XRequest>();
 		if buff.len() < hdr_len {
@@ -326,7 +345,7 @@ impl RequestReader for DefaultRequestReader {
 		let opcode = hdr.major_opcode;
 		let buff = &buff[hdr_len..];
 
-		let request = self.handle(opcode, buff)?;
+		let request = build_request(ctx, opcode, buff)?;
 		Ok(request.map(|r| (r, req)))
 	}
 }

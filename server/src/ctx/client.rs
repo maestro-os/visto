@@ -298,7 +298,7 @@ impl Client {
 			return Ok(());
 		}
 
-		if let Some((request, len)) = self.request_reader.read(&self.buff[..len])? {
+		if let Some((request, len)) = self.request_reader.read(ctx, &self.buff[..len])? {
 			// Discard remaining bytes
 			self.stream.read(&mut self.buff[..len])?;
 
@@ -327,5 +327,10 @@ impl Client {
 		}
 
 		Ok(())
+	}
+
+	/// Sets the request reader for the client.
+	pub fn set_request_reader(&mut self, reader: Box<dyn RequestReader>) {
+		self.request_reader = reader;
 	}
 }

@@ -5,6 +5,7 @@
 //! A file allows to specify associations names to shared libraries.
 
 use crate::ctx::Context;
+use crate::id_allocator::IDAllocator;
 use lazy_static::lazy_static;
 use std::collections::HashMap;
 use std::error::Error;
@@ -26,6 +27,12 @@ lazy_static! {
 	/// The list of loaded extensions, by name.
 	static ref LOADED_EXTENSIONS: Mutex<HashMap<String, Arc<Mutex<Extension>>>>
 		= Mutex::new(HashMap::new());
+
+	/// Allocator used to get a major opcode for each extension.
+	static ref MAJOR_OPCODE_ALLOCATOR: Mutex<IDAllocator<u8>>
+		= Mutex::new(IDAllocator::from_range_inclusive(128..=255));
+	// TODO event allocator
+	// TODO error allocator
 }
 
 /// Loads the list of extensions from the file at the given path.
@@ -89,12 +96,17 @@ impl Extension {
 			libloading::Library::new(path)
 		}?;
 
+		let major_opcode = MAJOR_OPCODE_ALLOCATOR.lock()
+			.unwrap()
+			.alloc()
+			.ok_or("Failed to allocate a major opcode!")?;
+
 		let ext = Self {
 			name: name.clone(),
 
 			lib,
 
-			major_opcode: 0, // TODO
+			major_opcode,
 			first_event: 0, // TODO
 			first_error: 0, // TODO
 		};

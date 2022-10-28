@@ -7,8 +7,10 @@ pub mod window;
 use client::Client;
 use crate::drm;
 use crate::net::poll::PollHandler;
+use crate::protocol::request::RequestReadFn;
 use screen::Screen;
 use std::cell::UnsafeCell;
+use std::collections::HashMap;
 use std::collections::LinkedList;
 use window::Window;
 
@@ -22,6 +24,10 @@ pub struct Context {
 	/// The list of clients.
 	/// An unsafe cell is used to allow double borrow of the context.
 	clients: UnsafeCell<LinkedList<Client>>,
+
+	/// Requests handlers registered by extensions.
+	/// The key is the major opcode and the value is the handler.
+	custom_requests: HashMap<u8, Box<RequestReadFn>>,
 }
 
 impl Context {
@@ -32,6 +38,8 @@ impl Context {
 			windows: Vec::new(),
 
 			clients: UnsafeCell::new(LinkedList::new()),
+
+			custom_requests: HashMap::new(),
 		}
 	}
 
@@ -97,5 +105,15 @@ impl Context {
 
 			cursor.move_next();
 		}
+	}
+
+	/// Returns an immutable reference to the list of custom requests.
+	pub fn get_custom_requests(&self) -> &HashMap<u8, Box<RequestReadFn>> {
+		&self.custom_requests
+	}
+
+	/// Returns a mutable reference to the list of custom requests.
+	pub fn get_custom_requests_mut(&mut self) -> &mut HashMap<u8, Box<RequestReadFn>> {
+		&mut self.custom_requests
 	}
 }
