@@ -38,8 +38,11 @@ pub enum ClientState {
 pub struct Client {
 	/// The client's socket.
 	stream: Stream,
+
 	/// The buffer to read data from the client.
 	buff: Vec<u8>,
+	/// The cursor on the buffer.
+	buff_cursor: usize,
 
 	/// The client's state.
 	state: ClientState,
@@ -60,7 +63,9 @@ impl Client {
 	pub fn new(stream: Stream) -> Self {
 		Self {
 			stream,
+
 			buff: vec![0; MAX_REQUEST_LEN],
+			buff_cursor: 0,
 
 			state: ClientState::Waiting,
 
@@ -76,6 +81,7 @@ impl Client {
 	pub fn get_stream(&self) -> &Stream {
 		&self.stream
 	}
+
 	/// Returns the next sequence number.
 	pub fn next_sequence_number(&mut self) -> u16 {
 		self.sequence_number += 1;
@@ -83,12 +89,21 @@ impl Client {
 	}
 
 	/// Writes the given object.
-	pub fn write<T>(&mut self, obj: &T) -> io::Result<()> {
+	pub fn write_reply<T>(&mut self, obj: &T) -> io::Result<()> {
 		let slice = unsafe {
 			slice::from_raw_parts(obj as *const _ as *const u8, size_of::<T>())
 		};
 
 		self.stream.write(slice)?;
+
+		if slice.len() < 32 {
+			// Zero-padding used to make replies at least 32 bytes long
+			let pad: [u8; 32] = [0; 32];
+			let pad_size = 32 - slice.len();
+
+			self.stream.write(&pad[..pad_size])?;
+		}
+
 		self.stream.flush()
 	}
 
@@ -240,9 +255,7 @@ impl Client {
 	///
 	/// `screens` is the list of screens.
 	fn handle_connect_request(&mut self, screens: &[Screen]) -> io::Result<()> {
-		// Reading request header
-		let len = self.stream.peek(&mut self.buff)?;
-		if len < size_of::<ClientConnect>() {
+		if self.buff_cursor < size_of::<ClientConnect>() {
 			return Ok(());
 		}
 		let hdr: &ClientConnect = unsafe {
@@ -255,11 +268,9 @@ impl Client {
 			+ pad(hdr.authorization_protocol_name_length as usize)
 			+ hdr.authorization_protocol_data_length as usize
 			+ pad(hdr.authorization_protocol_data_length as usize);
-		if len < required_len {
+		if self.buff_cursor < required_len {
 			return Ok(());
 		}
-		// Discard remaining bytes
-		self.stream.read(&mut self.buff[..required_len])?;
 
 		// Reading request
 		match hdr.byte_order {
@@ -285,6 +296,10 @@ impl Client {
 			return Ok(());
 		}
 
+		// Discarding used data
+		self.buff.rotate_left(required_len);
+		self.buff_cursor -= required_len;
+
 		self.write_connect_success(screens)
 	}
 
@@ -292,12 +307,15 @@ impl Client {
 	///
 	/// `ctx` is the current context.
 	fn handle_request(&mut self, ctx: &mut Context) -> Result<(), Box<dyn Error>> {
-		// Reading request header
-		let len = self.stream.peek(&mut self.buff)?;
+		let buff = &self.buff[..self.buff_cursor];
+		if buff.is_empty() {
+			return Ok(());
+		}
 
-		if let Some((request, len)) = self.request_reader.read(ctx, &self.buff[..len])? {
-			// Discard remaining bytes
-			let len = self.stream.read(&mut self.buff[..len])?;
+		if let Some((request, len)) = self.request_reader.read(ctx, buff)? {
+			// Discarding used data
+			self.buff.rotate_left(len);
+			self.buff_cursor -= len;
 
 			// Handle the request
 			request.handle(ctx, self)?;
@@ -310,6 +328,12 @@ impl Client {
 	///
 	/// `ctx` is the current context.
 	pub fn tick(&mut self, ctx: &mut Context) -> Result<(), Box<dyn Error>> {
+		// Reading incoming data
+		if self.buff_cursor < self.buff.len() {
+			let len = self.stream.read(&mut self.buff[self.buff_cursor..])?;
+			self.buff_cursor += len;
+		}
+
 		// TODO Notify client of event if necessary
 
 		// Reading input data

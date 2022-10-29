@@ -49,7 +49,7 @@ impl Request for BigReqEnable {
 
 			_padding1: 0,
 		};
-		client.write(&reply)?;
+		client.write_reply(&reply)?;
 
 		Ok(())
 	}

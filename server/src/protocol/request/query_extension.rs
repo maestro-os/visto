@@ -93,7 +93,7 @@ impl Request for QueryExtension {
 
 			_padding1: [0; 20],
 		};
-		client.write(&reply)?;
+		client.write_reply(&reply)?;
 
 		Ok(())
 	}

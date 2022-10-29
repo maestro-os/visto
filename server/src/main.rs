@@ -2,7 +2,6 @@
 
 #![feature(linked_list_cursors)]
 #![feature(step_trait)]
-#![feature(unix_socket_peek)]
 
 pub mod atom;
 pub mod ctx;
