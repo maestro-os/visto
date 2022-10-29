@@ -96,10 +96,13 @@ impl Extension {
 			libloading::Library::new(path)
 		}?;
 
+		// TODO Allocate only if required by the extension
 		let major_opcode = MAJOR_OPCODE_ALLOCATOR.lock()
 			.unwrap()
 			.alloc()
 			.ok_or("Failed to allocate a major opcode!")?;
+		let first_event = 0;
+		let first_error = 0;
 
 		let ext = Self {
 			name: name.clone(),
@@ -107,8 +110,8 @@ impl Extension {
 			lib,
 
 			major_opcode,
-			first_event: 0, // TODO
-			first_error: 0, // TODO
+			first_event,
+			first_error,
 		};
 
 		let init_func = unsafe {

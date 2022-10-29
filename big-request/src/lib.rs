@@ -34,6 +34,7 @@ impl RequestReader for BigRequestReader {
 	) -> Result<Option<(Box<dyn Request>, usize)>, Box<dyn Error>> {
 		// If not enough bytes are available, return
 		let mut hdr_len = size_of::<XRequest>();
+		println!("A");
 		if buff.len() < hdr_len {
 			return Ok(None);
 		}
@@ -41,6 +42,7 @@ impl RequestReader for BigRequestReader {
 		let hdr: &XRequest = unsafe {
 			util::reinterpret(&buff[0])
 		};
+		println!("B");
 		// Required number of bytes
 		let mut req = hdr.length as usize * 4;
 		if req == 0 {
@@ -53,17 +55,21 @@ impl RequestReader for BigRequestReader {
 
 			req = hdr.extended_length as usize * 4;
 			hdr_len += 4;
+			println!("C {}", req);
 		}
+		println!("D {}", req);
 
 		// If the request is too long, ignore it
 		if req > MAX_REQUEST_LEN {
 			// TODO
 			todo!();
 		}
+		println!("E");
 		// If not enough bytes are available, return
 		if buff.len() < req {
 			return Ok(None);
 		}
+		println!("F");
 
 		let opcode = hdr.major_opcode;
 		let buff = &buff[hdr_len..];

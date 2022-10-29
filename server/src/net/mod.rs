@@ -24,26 +24,32 @@ pub enum Stream {
 }
 
 impl Stream {
-	/// TODO doc
+	/// Peeks data from the stream and writes it in `buf`.
+	/// The function returns the number of peeked bytes.
 	pub fn peek(&self, buf: &mut [u8]) -> io::Result<usize> {
-		match self {
+		let len = match self {
 			Self::Unix(s) => s.peek(buf),
 			Self::Tcp(s) => s.peek(buf),
-		}
+		}?;
+		println!("peek: {:?}", &buf[..len]);
+		Ok(len)
 	}
 }
 
 impl Read for Stream {
 	fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
-		match self {
+		let len = match self {
 			Self::Unix(s) => s.read(buf),
 			Self::Tcp(s) => s.read(buf),
-		}
+		}?;
+		println!("read: {:?}", &buf[..len]);
+		Ok(len)
 	}
 }
 
 impl Write for Stream {
 	fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+		println!("write: {:?}", buf);
 		match self {
 			Self::Unix(s) => s.write(buf),
 			Self::Tcp(s) => s.write(buf),
@@ -51,6 +57,7 @@ impl Write for Stream {
 	}
 
 	fn flush(&mut self) -> io::Result<()> {
+		println!("flush");
 		match self {
 			Self::Unix(s) => s.flush(),
 			Self::Tcp(s) => s.flush(),

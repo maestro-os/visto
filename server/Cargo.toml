@@ -7,7 +7,7 @@ edition = "2021"
 [lib]
 name = "visto"
 path = "src/main.rs"
-crate-type = ["dylib"]
+crate-type = ["rlib"]
 
 [[bin]]
 name = "visto"
@@ -17,5 +17,3 @@ path = "src/main.rs"
 lazy_static = "1.4.0"
 libc = "^0.2"
 libloading = "0.7.3"
-serde = { version = "1.0.147", features = ["derive"] }
-serde_json = "1.0.87"

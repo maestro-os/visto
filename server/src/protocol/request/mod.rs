@@ -251,7 +251,7 @@ pub const GET_MODIFIER_MAPPING: u8 = 119;
 pub const NO_OPERATION: u8 = 127;
 
 /// The maximum length of a request in bytes.
-pub const MAX_REQUEST_LEN: usize = 1 << 16; // TODO Increase
+pub const MAX_REQUEST_LEN: usize = 4194304;
 
 /// A request with the given opcode and buffer.
 ///

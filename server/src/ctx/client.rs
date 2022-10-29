@@ -39,7 +39,7 @@ pub struct Client {
 	/// The client's socket.
 	stream: Stream,
 	/// The buffer to read data from the client.
-	buff: [u8; MAX_REQUEST_LEN],
+	buff: Vec<u8>,
 
 	/// The client's state.
 	state: ClientState,
@@ -60,7 +60,7 @@ impl Client {
 	pub fn new(stream: Stream) -> Self {
 		Self {
 			stream,
-			buff: [0; MAX_REQUEST_LEN],
+			buff: vec![0; MAX_REQUEST_LEN],
 
 			state: ClientState::Waiting,
 
@@ -94,7 +94,7 @@ impl Client {
 
 	/// Writes a connect failed message with the given reason.
 	pub fn write_connect_failed(&mut self, reason: &str) -> io::Result<()> {
-		println!("New client connection failed: {}", reason);
+		eprintln!("New client connection failed: {}", reason);
 		self.state = ClientState::ConnectFailed;
 
 		let reason_len = reason.len();
@@ -164,7 +164,7 @@ impl Client {
 			resource_id_mask: !0,
 			motion_buffer_size: 0, // TODO
 			vendor_length: VENDOR_NAME.len() as _,
-			max_request_length: (MAX_REQUEST_LEN / 4) as u16,
+			max_request_length: u16::MAX,
 			roots_screens_number: 1, // TODO
 			pixmap_formats_count: 1, // TODO
 			image_byte_order: 1, // MSB first
@@ -294,13 +294,10 @@ impl Client {
 	fn handle_request(&mut self, ctx: &mut Context) -> Result<(), Box<dyn Error>> {
 		// Reading request header
 		let len = self.stream.peek(&mut self.buff)?;
-		if len < size_of::<XRequest>() {
-			return Ok(());
-		}
 
 		if let Some((request, len)) = self.request_reader.read(ctx, &self.buff[..len])? {
 			// Discard remaining bytes
-			self.stream.read(&mut self.buff[..len])?;
+			let len = self.stream.read(&mut self.buff[..len])?;
 
 			// Handle the request
 			request.handle(ctx, self)?;
