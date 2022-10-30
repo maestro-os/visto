@@ -9,7 +9,12 @@ pub const MAJOR_VERSION: u16 = 11;
 pub const MINOR_VERSION: u16 = 0;
 
 /// The vendor's name.
-pub const VENDOR_NAME: &str = "TODO"; // TODO
+pub const VENDOR_NAME: &str = "maestro";
+
+/// Reply type: Error
+pub const REPLY_TYPE_ERROR: u8 = 0;
+/// Reply type: Normal reply
+pub const REPLY_TYPE_REPLY: u8 = 1;
 
 /// The header of a request.
 #[repr(C, packed)]

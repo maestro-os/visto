@@ -4,6 +4,7 @@ use crate::ctx::Context;
 use crate::ctx::client::Client;
 use crate::extension;
 use crate::protocol::pad;
+use crate::protocol;
 use crate::util;
 use std::error::Error;
 use std::mem::size_of;
@@ -24,8 +25,8 @@ struct QueryExtensionHdr {
 /// The reply.
 #[repr(C, packed)]
 struct QueryExtensionReply {
-	/// TODO doc
-	type_: u8,
+	/// The type of the reply (normal).
+	reply_type: u8,
 	/// Padding.
 	_padding0: u8,
 	/// Sequence number.
@@ -53,9 +54,12 @@ pub struct QueryExtension {
 }
 
 impl Request for QueryExtension {
-	fn handle(&self, ctx: &mut Context, client: &mut Client) -> Result<(), Box<dyn Error>> {
-		let seq_nbr = client.next_sequence_number();
-
+	fn handle(
+		&self,
+		ctx: &mut Context,
+		client: &mut Client,
+		seq_nbr: u16,
+	) -> Result<(), Box<dyn Error>> {
 		let ext = extension::query(ctx, &self.name).unwrap_or_else(|e| {
 			eprintln!("Couldn't load extension `{}`: {}", self.name, e);
 			None
@@ -81,7 +85,7 @@ impl Request for QueryExtension {
 		};
 
 		let reply = QueryExtensionReply {
-			type_: 1, // TODO Use constant
+			reply_type: protocol::REPLY_TYPE_REPLY,
 			_padding0: 0,
 			seq_nbr,
 			reply_length: 0,

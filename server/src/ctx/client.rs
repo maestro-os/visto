@@ -4,7 +4,6 @@ use crate::ctx::Context;
 use crate::ctx::Screen;
 use crate::net::Stream;
 use crate::protocol::VENDOR_NAME;
-use crate::protocol::XRequest;
 use crate::protocol::connect::ClientConnect;
 use crate::protocol::connect::ConnectFailed;
 use crate::protocol::connect::ConnectSuccess;
@@ -84,7 +83,7 @@ impl Client {
 	}
 
 	/// Returns the next sequence number.
-	pub fn next_sequence_number(&mut self) -> u16 {
+	fn next_sequence_number(&mut self) -> u16 {
 		self.sequence_number += 1;
 		self.sequence_number.0
 	}
@@ -315,8 +314,10 @@ impl Client {
 			self.buff.rotate_left(len);
 			self.buff_cursor -= len;
 
+			let seq = self.next_sequence_number();
+
 			// Handle the request
-			request.handle(ctx, self)?;
+			request.handle(ctx, self, seq)?;
 		}
 
 		Ok(())

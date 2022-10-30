@@ -6,12 +6,13 @@ use visto::ctx::Context;
 use visto::ctx::client::Client;
 use visto::protocol::request::MAX_REQUEST_LEN;
 use visto::protocol::request::Request;
+use visto::protocol;
 
 /// TODO doc
 #[repr(C, packed)]
 pub struct BigReqEnableReply {
-	/// TODO doc
-	type_: u8,
+	/// The type of the reply (normal).
+	reply_type: u8,
 	/// Padding.
 	_padding0: u8,
 	/// Sequence number.
@@ -34,13 +35,12 @@ impl Request for BigReqEnable {
 		&self,
 		_ctx: &mut Context,
 		client: &mut Client,
+		seq_nbr: u16,
 	) -> Result<(), Box<dyn Error>> {
-		let seq_nbr = client.next_sequence_number();
-
 		client.set_request_reader(Box::new(BigRequestReader {}));
 
 		let reply = BigReqEnableReply {
-			type_: 1, // TODO Use constant
+			reply_type: protocol::REPLY_TYPE_REPLY,
 			_padding0: 0,
 			seq_nbr,
 			reply_length: 0,

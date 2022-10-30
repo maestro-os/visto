@@ -280,7 +280,7 @@ pub fn build_request(
 		QUERY_EXTENSION => query_extension::read(buff)?
 			.map(|r| Box::new(r) as Box<dyn Request>),
 
-		_ => None
+		_ => None // TODO Error instead?
 	};
 
 	Ok(request)
@@ -294,8 +294,15 @@ pub type RequestReadFn = dyn Fn(&[u8]) -> Result<Option<Box<dyn Request>>, Box<d
 pub trait Request {
 	/// Handles the request for the given client.
 	///
-	/// `ctx` is the current context.
-	fn handle(&self, ctx: &mut Context, client: &mut Client) -> Result<(), Box<dyn Error>>;
+	/// Arguments:
+	/// - `ctx` is the current context.
+	/// - `seq_nbr` is the sequence number for the request.
+	fn handle(
+		&self,
+		ctx: &mut Context,
+		client: &mut Client,
+		seq_nbr: u16,
+	) -> Result<(), Box<dyn Error>>;
 }
 
 /// Trait representing an object used to read a request.
