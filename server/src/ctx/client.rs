@@ -311,20 +311,24 @@ impl Client {
 	///
 	/// `ctx` is the current context.
 	fn handle_request(&mut self, ctx: &mut Context) -> Result<(), Box<dyn Error>> {
-		let buff = &self.buff[..self.buff_cursor];
-		if buff.is_empty() {
-			return Ok(());
-		}
+		loop {
+			let buff = &self.buff[..self.buff_cursor];
+			if buff.is_empty() {
+				return Ok(());
+			}
 
-		if let Some((request, len)) = self.request_reader.read(ctx, buff)? {
-			// Discarding used data
-			self.buff.rotate_left(len);
-			self.buff_cursor -= len;
+			if let Some((request, len)) = self.request_reader.read(ctx, buff)? {
+				// Discarding used data
+				self.buff.rotate_left(len);
+				self.buff_cursor -= len;
 
-			let seq = self.next_sequence_number();
+				let seq = self.next_sequence_number();
 
-			// Handle the request
-			request.handle(ctx, self, seq)?;
+				// Handle the request
+				request.handle(ctx, self, seq)?;
+			} else {
+				break;
+			}
 		}
 
 		Ok(())

@@ -350,7 +350,7 @@ impl RequestReader for DefaultRequestReader {
 		}
 
 		let opcode = hdr.major_opcode;
-		let buff = &buff[hdr_len..];
+		let buff = &buff[hdr_len..req];
 
 		let request = build_request(ctx, opcode, buff)?;
 		Ok(request.map(|r| (r, req)))

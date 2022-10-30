@@ -21,34 +21,6 @@ pub struct CreateGCHdr {
 	bitmask: u32,
 }
 
-/// Value of a graphics context.
-#[repr(C, packed)]
-pub struct GCValue {
-	pub function: u8,
-	pub plane_mask: u32,
-	pub foreground: u32,
-	pub background: u32,
-	pub line_width: u16,
-	pub line_style: u8,
-	pub cap_style: u8,
-	pub join_style: u8,
-	pub fill_style: u8,
-	pub fill_rule: u8,
-	pub tile: u32,
-	pub stipple: u32,
-	pub tile_stipple_x_origin: i16,
-	pub tile_stipple_y_origin: i16,
-	pub font: u32,
-	pub subwindow_mode: u8,
-	pub graphics_exposures: u8,
-	pub clip_x_origin: i16,
-	pub clip_y_origin: i16,
-	pub clip_mask: u32,
-	pub dash_offset: u16,
-	pub dashes: u8,
-	pub arc_mode: u8,
-}
-
 /// Structure representing the request.
 pub struct CreateGC {
 	/// The graphics context's ID.
@@ -81,44 +53,80 @@ pub fn read(buff: &[u8]) -> Result<Option<Box<dyn Request>>, Box<dyn Error>> {
 
 	let mut values = vec![];
 
-	let values_start = size_of::<CreateGCHdr>();
-	for off in (values_start..buff.len()).step_by(size_of::<gc::Value>()) {
-		let val: &GCValue = unsafe {
-			util::reinterpret(&buff[off])
+	let mut off = size_of::<CreateGCHdr>();
+	let set_bits_iter = (0..=22).filter(|i| hdr.bitmask & (1 << i) != 0);
+	for id in set_bits_iter {
+		let size = match id {
+			0 => 1,
+			1 => 4,
+			2 => 4,
+			3 => 4,
+			4 => 2,
+			5 => 1,
+			6 => 1,
+			7 => 1,
+			8 => 1,
+			9 => 1,
+			10 => 4,
+			11 => 4,
+			12 => 2,
+			13 => 2,
+			14 => 4,
+			15 => 1,
+			16 => 1,
+			17 => 2,
+			18 => 2,
+			19 => 4,
+			20 => 2,
+			21 => 1,
+			22 => 1,
+
+			_ => unreachable!(),
 		};
 
-		values.push(gc::Value {
-			function: val.function.try_into()?,
-			plane_mask: val.plane_mask,
-			foreground: val.foreground,
-			background: val.background,
-			line_width: val.line_width,
-			line_style: val.line_style.try_into()?,
-			cap_style: val.cap_style.try_into()?,
-			join_style: val.join_style.try_into()?,
-			fill_style: val.fill_style.try_into()?,
-			fill_rule: val.fill_rule.try_into()?,
-			tile: val.tile,
-			stipple: val.stipple,
-			tile_stipple_x_origin: val.tile_stipple_x_origin,
-			tile_stipple_y_origin: val.tile_stipple_y_origin,
-			font: val.font,
-			subwindow_mode: val.subwindow_mode.try_into()?,
-			graphics_exposures: val.graphics_exposures,
-			clip_x_origin: val.clip_x_origin,
-			clip_y_origin: val.clip_y_origin,
-			clip_mask: val.clip_mask,
-			dash_offset: val.dash_offset,
-			dashes: val.dashes,
-			arc_mode: val.arc_mode.try_into()?,
-		});
+		let val = match size {
+			1 => unsafe { *util::reinterpret::<_, u8>(&buff[off]) as u32 },
+			2 => unsafe { *util::reinterpret::<_, u16>(&buff[off]) as u32 },
+			4 => unsafe { *util::reinterpret::<_, u32>(&buff[off]) as u32 },
+
+			_ => unreachable!(),
+		};
+		off += size;
+
+		// TODO Handle errors
+		let val = match id {
+			0 => gc::Value::Function((val as u8).try_into()?),
+			1 => gc::Value::PlaneMask(val),
+			2 => gc::Value::Foreground(val),
+			3 => gc::Value::Background(val),
+			4 => gc::Value::LineWidth(val as _),
+			5 => gc::Value::LineStyle((val as u8).try_into()?),
+			6 => gc::Value::CapStyle((val as u8).try_into()?),
+			7 => gc::Value::JoinStyle((val as u8).try_into()?),
+			8 => gc::Value::FillStyle((val as u8).try_into()?),
+			9 => gc::Value::FillRule((val as u8).try_into()?),
+			10 => gc::Value::Tile(val),
+			11 => gc::Value::Stipple(val),
+			12 => gc::Value::TileStippleXOrigin(val as _),
+			13 => gc::Value::TileStippleYOrigin(val as _),
+			14 => gc::Value::Font(val),
+			15 => gc::Value::SubwindowMode((val as u8).try_into()?),
+			16 => gc::Value::GraphicsExposures(val as _),
+			17 => gc::Value::ClipXOrigin(val as _),
+			18 => gc::Value::ClipYOrigin(val as _),
+			19 => gc::Value::ClipMask(val),
+			20 => gc::Value::DashOffset(val as _),
+			21 => gc::Value::Dashes(val as _),
+			22 => gc::Value::ArcMode((val as u8).try_into()?),
+
+			_ => unreachable!(),
+		};
+
+		values.push(val);
 	}
 
 	let gc = GC {
 		drawable: hdr.drawable,
-
-		bitmask: hdr.bitmask,
-
 		values,
 	};
 

@@ -238,53 +238,53 @@ impl TryFrom<u8> for ArcMode {
 
 /// Value of a graphics context.
 #[derive(Clone)]
-pub struct Value {
+pub enum Value {
 	/// TODO doc
-	pub function: Function,
+	Function(Function),
 	/// TODO doc
-	pub plane_mask: u32,
+	PlaneMask(u32),
 	/// TODO doc
-	pub foreground: u32,
+	Foreground(u32),
 	/// TODO doc
-	pub background: u32,
+	Background(u32),
 	/// TODO doc
-	pub line_width: u16,
+	LineWidth(u16),
 	/// TODO doc
-	pub line_style: LineStyle,
+	LineStyle(LineStyle),
 	/// TODO doc
-	pub cap_style: CapStyle,
+	CapStyle(CapStyle),
 	/// TODO doc
-	pub join_style: JoinStyle,
+	JoinStyle(JoinStyle),
 	/// TODO doc
-	pub fill_style: FillStyle,
+	FillStyle(FillStyle),
 	/// TODO doc
-	pub fill_rule: FillRule,
+	FillRule(FillRule),
 	/// TODO doc
-	pub tile: u32,
+	Tile(u32),
 	/// TODO doc
-	pub stipple: u32,
+	Stipple(u32),
 	/// TODO doc
-	pub tile_stipple_x_origin: i16,
+	TileStippleXOrigin(i16),
 	/// TODO doc
-	pub tile_stipple_y_origin: i16,
+	TileStippleYOrigin(i16),
 	/// TODO doc
-	pub font: u32,
+	Font(u32),
 	/// TODO doc
-	pub subwindow_mode: SubWindowMode,
+	SubwindowMode(SubWindowMode),
 	/// TODO doc
-	pub graphics_exposures: u8,
+	GraphicsExposures(u8),
 	/// TODO doc
-	pub clip_x_origin: i16,
+	ClipXOrigin(i16),
 	/// TODO doc
-	pub clip_y_origin: i16,
+	ClipYOrigin(i16),
 	/// TODO doc
-	pub clip_mask: u32,
+	ClipMask(u32),
 	/// TODO doc
-	pub dash_offset: u16,
+	DashOffset(u16),
 	/// TODO doc
-	pub dashes: u8,
+	Dashes(u8),
 	/// TODO doc
-	pub arc_mode: ArcMode,
+	ArcMode(ArcMode),
 }
 
 /// Structure representing a graphics context.
@@ -292,10 +292,6 @@ pub struct Value {
 pub struct GC {
 	/// The ID of the drawable.
 	pub drawable: u32,
-
-	/// TODO
-	pub bitmask: u32,
-
 	/// The list of values.
 	pub values: Vec<Value>,
 }
