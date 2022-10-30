@@ -70,11 +70,11 @@ impl Screen {
 			visual_id: 0, // TODO
 			class: protocol::VisualClass::DirectColor,
 			bits_per_rgb_value: 24,
-			colormap_entries: 0, // TODO
+			colormap_entries: 1 << 8, // TODO
 
-			red_mask: 0xff000000,
-			green_mask: 0x00ff0000,
-			blue_mask: 0x0000ff00,
+			red_mask: 0xff0000,
+			green_mask: 0x00ff00,
+			blue_mask: 0x0000ff,
 
 			_padding: 0,
 		};
@@ -99,8 +99,8 @@ impl Screen {
 			millimeters_width: self.dri_connector.mm_width as _,
 			millimeters_height: self.dri_connector.mm_height as _,
 
-			min_installed_maps: 0, // TODO
-			max_installed_maps: 0, // TODO
+			min_installed_maps: 1, // TODO
+			max_installed_maps: 1, // TODO
 
 			root_visual: 0, // TODO
 			backing_stores: 0, // TODO

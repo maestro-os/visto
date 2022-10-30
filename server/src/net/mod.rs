@@ -29,14 +29,14 @@ impl Read for Stream {
 			Self::Unix(s) => s.read(buf),
 			Self::Tcp(s) => s.read(buf),
 		}?;
-		println!("read: {:?}", &buf[..len]);
+		println!("read: {:?} ({})", &buf[..len], len);
 		Ok(len)
 	}
 }
 
 impl Write for Stream {
 	fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
-		println!("write: {:?}", buf);
+		println!("write: {:?} ({})", buf, buf.len());
 		match self {
 			Self::Unix(s) => s.write(buf),
 			Self::Tcp(s) => s.write(buf),

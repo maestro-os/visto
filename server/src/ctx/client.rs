@@ -1,4 +1,4 @@
-//! TODO doc
+//! This module implements support for X protocol clients.
 
 use crate::ctx::Context;
 use crate::ctx::Screen;
@@ -14,6 +14,7 @@ use crate::protocol::request::MAX_REQUEST_LEN;
 use crate::protocol::request::RequestReader;
 use crate::protocol;
 use crate::util;
+use std::cmp::max;
 use std::error::Error;
 use std::io::Read;
 use std::io::Write;
@@ -94,16 +95,13 @@ impl Client {
 			slice::from_raw_parts(obj as *const _ as *const u8, size_of::<T>())
 		};
 
-		self.stream.write(slice)?;
-
-		if slice.len() < 32 {
-			// Zero-padding used to make replies at least 32 bytes long
-			let pad: [u8; 32] = [0; 32];
-			let pad_size = 32 - slice.len();
-
-			self.stream.write(&pad[..pad_size])?;
+		// Adding padding to make requests at least 32 bytes long
+		let mut data = vec![0; max(slice.len(), 32)];
+		for i in 0..slice.len() {
+			data[i] = slice[i];
 		}
 
+		self.stream.write(&data)?;
 		self.stream.flush()
 	}
 
@@ -142,7 +140,7 @@ impl Client {
 			);
 		}
 
-		self.stream.write(buf.as_slice())?;
+		self.stream.write(&buf)?;
 		self.stream.flush()
 	}
 
@@ -161,9 +159,9 @@ impl Client {
 			.sum();
 
 		let additional_data_len = 32
-			+ 1 * size_of::<protocol::Format>() // TODO
 			+ VENDOR_NAME.len()
 			+ pad(VENDOR_NAME.len())
+			+ 1 * size_of::<protocol::Format>() // TODO
 			+ screens_len;
 
 		let msg = ConnectSuccess {
@@ -175,8 +173,8 @@ impl Client {
 			additional_data_len: (additional_data_len / 4) as _,
 
 			release_number: crate::RELEASE_NUMBER,
-			resource_id_base: !0,
-			resource_id_mask: !0,
+			resource_id_base: 0xfffffff, // TODO use
+			resource_id_mask: 0xfffffff, // TODO use
 			motion_buffer_size: 0, // TODO
 			vendor_length: VENDOR_NAME.len() as _,
 			max_request_length: u16::MAX,
@@ -204,7 +202,7 @@ impl Client {
 			_padding: [0; 5],
 		};
 
-		let len = 1 + size_of::<ConnectSuccess>() + additional_data_len;
+		let len = 8 + additional_data_len;
 		let mut buf = vec![0; len];
 
 		let mut off = 0;
@@ -247,7 +245,7 @@ impl Client {
 			off += s.len();
 		}
 
-		self.stream.write(buf.as_slice())?;
+		self.stream.write(&buf)?;
 		self.stream.flush()
 	}
 
