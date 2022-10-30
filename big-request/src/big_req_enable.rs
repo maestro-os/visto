@@ -56,7 +56,7 @@ impl Request for BigReqEnable {
 }
 
 /// TODO doc
-pub fn read(buff: &[u8]) -> Result<Option<Box<dyn Request>>, Box<dyn Error>> {
+pub fn read(buff: &[u8], _: u8) -> Result<Option<Box<dyn Request>>, Box<dyn Error>> {
 	if !buff.is_empty() {
 		return Err("TODO".into()); // TODO
 	}

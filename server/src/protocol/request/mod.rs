@@ -1,6 +1,7 @@
 //! This module implements each requests of the X protocol.
 
 pub mod create_gc;
+pub mod get_property;
 pub mod query_extension;
 
 use crate::ctx::Context;
@@ -260,25 +261,28 @@ pub const MAX_REQUEST_LEN: usize = 4194304;
 /// - `ctx` is the current context.
 /// - `opcode` is the request's opcode.
 /// - `buff` is the body of the request.
+/// - `optional` is the optional byte.
 ///
 /// If the opcode is not assigned, the function returns None.
 pub fn build_request(
 	ctx: &Context,
 	opcode: u8,
 	buff: &[u8],
+	optional: u8,
 ) -> Result<Option<Box<dyn Request>>, Box<dyn Error>> {
 	// TODO rm
 	println!("=> {}", opcode);
 
 	match ctx.get_custom_requests().get(&opcode) {
-		Some(f) => return f(buff),
+		Some(f) => return f(buff, optional),
 		None => {},
 	}
 
 	let request = match opcode {
 		// TODO
-		CREATE_GC => create_gc::read(buff)?,
-		QUERY_EXTENSION => query_extension::read(buff)?,
+		GET_PROPERTY => get_property::read(buff, optional)?,
+		CREATE_GC => create_gc::read(buff, optional)?,
+		QUERY_EXTENSION => query_extension::read(buff, optional)?,
 
 		_ => None, // TODO Error instead?
 	};
@@ -288,7 +292,7 @@ pub fn build_request(
 
 /// A function to call to read a function of a specific type.
 /// Each request type has its own function.
-pub type RequestReadFn = dyn Fn(&[u8]) -> Result<Option<Box<dyn Request>>, Box<dyn Error>>;
+pub type RequestReadFn = dyn Fn(&[u8], u8) -> Result<Option<Box<dyn Request>>, Box<dyn Error>>;
 
 /// Trait representing a request.
 pub trait Request {
@@ -352,7 +356,7 @@ impl RequestReader for DefaultRequestReader {
 		let opcode = hdr.major_opcode;
 		let buff = &buff[hdr_len..req];
 
-		let request = build_request(ctx, opcode, buff)?;
+		let request = build_request(ctx, opcode, buff, hdr.optional)?;
 		Ok(request.map(|r| (r, req)))
 	}
 }

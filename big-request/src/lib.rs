@@ -68,7 +68,7 @@ impl RequestReader for BigRequestReader {
 		let opcode = hdr.major_opcode;
 		let buff = &buff[hdr_len..req];
 
-		let request = request::build_request(ctx, opcode, buff)?;
+		let request = request::build_request(ctx, opcode, buff, hdr.optional)?;
 		Ok(request.map(|r| (r, req)))
 
 	}

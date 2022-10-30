@@ -104,7 +104,7 @@ impl Request for QueryExtension {
 }
 
 /// Parses `QueryExtension`.
-pub fn read(buff: &[u8]) -> Result<Option<Box<dyn Request>>, Box<dyn Error>> {
+pub fn read(buff: &[u8], _: u8) -> Result<Option<Box<dyn Request>>, Box<dyn Error>> {
 	if buff.len() < size_of::<QueryExtensionHdr>() {
 		return Ok(None);
 	}

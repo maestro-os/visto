@@ -21,8 +21,8 @@ pub const REPLY_TYPE_REPLY: u8 = 1;
 pub struct XRequest {
 	/// The major opcode of the request.
 	pub major_opcode: u8,
-	/// One-byte padding.
-	_padding: u8,
+	/// A byte to be used as an optional additional data.
+	pub optional: u8,
 	/// The total length of the request, including the header, in units of 4 bytes.
 	pub length: u16,
 }
