@@ -2,6 +2,7 @@
 
 use crate::ctx::Context;
 use crate::ctx::Screen;
+use crate::gc::GC;
 use crate::net::Stream;
 use crate::protocol::VENDOR_NAME;
 use crate::protocol::connect::ClientConnect;
@@ -14,6 +15,7 @@ use crate::protocol::request::RequestReader;
 use crate::protocol;
 use crate::util;
 use std::cmp::max;
+use std::collections::HashMap;
 use std::error::Error;
 use std::io::Read;
 use std::io::Write;
@@ -56,6 +58,9 @@ pub struct Client {
 	/// The current request reader. Changing this value allows to change the behaviour when reading
 	/// requests.
 	request_reader: Box<dyn RequestReader>,
+
+	/// The list of Graphics Contexts. The key is the ID of the context.
+	gcs: HashMap<u32, GC>,
 }
 
 impl Client {
@@ -74,6 +79,8 @@ impl Client {
 			sequence_number: Wrapping(0),
 
 			request_reader: Box::new(DefaultRequestReader {}),
+
+			gcs: HashMap::new(),
 		}
 	}
 
@@ -352,5 +359,10 @@ impl Client {
 	/// Sets the request reader for the client.
 	pub fn set_request_reader(&mut self, reader: Box<dyn RequestReader>) {
 		self.request_reader = reader;
+	}
+
+	/// Sets a Graphics Context `gc` with the given ID `cid`.
+	pub fn set_gc(&mut self, cid: u32, gc: GC) {
+		self.gcs.insert(cid, gc);
 	}
 }

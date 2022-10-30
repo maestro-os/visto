@@ -7,6 +7,7 @@ pub mod atom;
 pub mod ctx;
 pub mod drm;
 pub mod extension;
+pub mod gc;
 pub mod id_allocator;
 pub mod net;
 pub mod protocol;

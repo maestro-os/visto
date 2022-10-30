@@ -1,4 +1,4 @@
-//! The QueryExtension request allows to ask for an extention to be loaded.
+//! The `QueryExtension` request allows to ask for an extention to be loaded.
 
 use crate::ctx::Context;
 use crate::ctx::client::Client;
@@ -47,7 +47,7 @@ struct QueryExtensionReply {
 	_padding1: [u8; 20],
 }
 
-/// Structurer representing the request.
+/// Structure representing the request.
 pub struct QueryExtension {
 	/// The name of the extension.
 	name: String,
@@ -104,7 +104,7 @@ impl Request for QueryExtension {
 }
 
 /// Parses `QueryExtension`.
-pub fn read(buff: &[u8]) -> Result<Option<QueryExtension>, Box<dyn Error>> {
+pub fn read(buff: &[u8]) -> Result<Option<Box<dyn Request>>, Box<dyn Error>> {
 	if buff.len() < size_of::<QueryExtensionHdr>() {
 		return Ok(None);
 	}
@@ -123,7 +123,7 @@ pub fn read(buff: &[u8]) -> Result<Option<QueryExtension>, Box<dyn Error>> {
 	let name_end = name_begin + hdr.name_length as usize;
 	let name = str::from_utf8(&buff[name_begin..name_end]).unwrap(); // TODO Handle error
 
-	Ok(Some(QueryExtension {
+	Ok(Some(Box::new(QueryExtension {
 		name: String::from_str(name).unwrap(),
-	}))
+	})))
 }

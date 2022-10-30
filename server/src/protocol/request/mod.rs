@@ -1,5 +1,6 @@
 //! This module implements each requests of the X protocol.
 
+pub mod create_gc;
 pub mod query_extension;
 
 use crate::ctx::Context;
@@ -276,11 +277,10 @@ pub fn build_request(
 
 	let request = match opcode {
 		// TODO
+		CREATE_GC => create_gc::read(buff)?,
+		QUERY_EXTENSION => query_extension::read(buff)?,
 
-		QUERY_EXTENSION => query_extension::read(buff)?
-			.map(|r| Box::new(r) as Box<dyn Request>),
-
-		_ => None // TODO Error instead?
+		_ => None, // TODO Error instead?
 	};
 
 	Ok(request)
