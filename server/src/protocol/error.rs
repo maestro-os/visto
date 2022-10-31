@@ -1,4 +1,4 @@
-//! This module implements errors.
+//! This module implements error replies.
 
 use crate::protocol;
 

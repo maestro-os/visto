@@ -2,6 +2,7 @@
 
 pub mod connect;
 pub mod error;
+pub mod event;
 pub mod request;
 
 /// Major version of the protocol.
@@ -27,9 +28,6 @@ pub struct XRequest {
 	/// The total length of the request, including the header, in units of 4 bytes.
 	pub length: u16,
 }
-
-// TODO XError
-// TODO XEvent
 
 /// TODO doc
 #[repr(u8)]
@@ -203,27 +201,6 @@ pub struct Host {
 	pub address: Vec<u8>,
 }
 
-/// Enumeration of errors.
-pub enum Error {
-	Access,
-	Alloc,
-	Atom,
-	Colormap,
-	Cursor,
-	Drawable,
-	Font,
-	GContext,
-	IDChoice,
-	Implementation,
-	Length,
-	Match,
-	Name,
-	Pixmap,
-	Request,
-	Value,
-	Window,
-}
-
 /// Structure representing a X format.
 #[repr(C, packed)]
 pub struct Format {
@@ -323,7 +300,7 @@ pub struct Visual {
 	pub class: VisualClass,
 	/// The number of bits per RGB values.
 	pub bits_per_rgb_value: u8,
-	/// TODO doc
+	/// Number of colormap entries.
 	pub colormap_entries: u16,
 
 	/// The mask of bits on which the Red color is encoded.
