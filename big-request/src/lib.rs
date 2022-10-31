@@ -2,11 +2,12 @@
 
 mod big_req_enable;
 
-use std::error::Error;
 use std::mem::size_of;
 use visto::ctx::Context;
 use visto::extension::Extension;
 use visto::protocol::XRequest;
+use visto::protocol::error::Error;
+use visto::protocol::error::XError;
 use visto::protocol::request::MAX_REQUEST_LEN;
 use visto::protocol::request::Request;
 use visto::protocol::request::RequestReader;
@@ -31,7 +32,7 @@ impl RequestReader for BigRequestReader {
 		&self,
 		ctx: &Context,
 		buff: &[u8],
-	) -> Result<Option<(Box<dyn Request>, usize)>, Box<dyn Error>> {
+	) -> Result<Option<(Box<dyn Request>, usize)>, XError> {
 		// If not enough bytes are available, return
 		let mut hdr_len = size_of::<XRequest>();
 		if buff.len() < hdr_len {
@@ -55,10 +56,13 @@ impl RequestReader for BigRequestReader {
 			hdr_len += 4;
 		}
 
+		let opcode = hdr.major_opcode;
+
 		// If the request is too long, ignore it
 		if req > MAX_REQUEST_LEN {
-			// TODO
-			todo!();
+			let err = Error::Length;
+			// TODO seq nbr
+			return Err(err.to_protocol(0, 0, opcode));
 		}
 		// If not enough bytes are available, return
 		if buff.len() < req {
@@ -68,8 +72,12 @@ impl RequestReader for BigRequestReader {
 		let opcode = hdr.major_opcode;
 		let buff = &buff[hdr_len..req];
 
-		let request = request::build_request(ctx, opcode, buff, hdr.optional)?;
-		Ok(request.map(|r| (r, req)))
+		match request::build_request(ctx, opcode, buff, hdr.optional) {
+			Ok(request) => Ok(request.map(|r| (r, req))),
+
+			// TODO seq nbr
+			Err(e) => Err(e.to_protocol(0, 0, opcode)),
+		}
 
 	}
 }

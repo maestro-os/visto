@@ -2,7 +2,7 @@
 
 use crate::ctx::Context;
 use crate::ctx::Screen;
-use crate::gc::GC;
+use crate::ctx::gc::GC;
 use crate::net::Stream;
 use crate::protocol::VENDOR_NAME;
 use crate::protocol::connect::ClientConnect;
@@ -96,7 +96,7 @@ impl Client {
 	}
 
 	/// Writes the given object.
-	pub fn write_reply<T>(&mut self, obj: &T) -> io::Result<()> {
+	pub fn write_obj<T>(&mut self, obj: &T) -> io::Result<()> {
 		let slice = unsafe {
 			slice::from_raw_parts(obj as *const _ as *const u8, size_of::<T>())
 		};
@@ -317,17 +317,24 @@ impl Client {
 				return Ok(());
 			}
 
-			if let Some((request, len)) = self.request_reader.read(ctx, buff)? {
-				// Discarding used data
-				self.buff.rotate_left(len);
-				self.buff_cursor -= len;
+			match self.request_reader.read(ctx, buff) {
+				// Handle request
+				Ok(Some((request, len))) => {
+					// Discarding used data
+					self.buff.rotate_left(len);
+					self.buff_cursor -= len;
 
-				let seq = self.next_sequence_number();
+					let seq = self.next_sequence_number();
 
-				// Handle the request
-				request.handle(ctx, self, seq)?;
-			} else {
-				break;
+					// Handle the request
+					request.handle(ctx, self, seq)?;
+				},
+
+				// No request to handle, break
+				Ok(None) => break,
+
+				// Handle error
+				Err(e) => self.write_obj(&e)?,
 			}
 		}
 

@@ -3,10 +3,10 @@
 use crate::ctx::Context;
 use crate::ctx::client::Client;
 use crate::extension;
+use crate::protocol::error::Error;
 use crate::protocol::pad;
 use crate::protocol;
 use crate::util;
-use std::error::Error;
 use std::mem::size_of;
 use std::str::FromStr;
 use std::str;
@@ -59,7 +59,7 @@ impl Request for QueryExtension {
 		ctx: &mut Context,
 		client: &mut Client,
 		seq_nbr: u16,
-	) -> Result<(), Box<dyn Error>> {
+	) -> Result<(), Box<dyn std::error::Error>> {
 		let ext = extension::query(ctx, &self.name).unwrap_or_else(|e| {
 			eprintln!("Couldn't load extension `{}`: {}", self.name, e);
 			None
@@ -97,14 +97,14 @@ impl Request for QueryExtension {
 
 			_padding1: [0; 20],
 		};
-		client.write_reply(&reply)?;
+		client.write_obj(&reply)?;
 
 		Ok(())
 	}
 }
 
 /// Parses `QueryExtension`.
-pub fn read(buff: &[u8], _: u8) -> Result<Option<Box<dyn Request>>, Box<dyn Error>> {
+pub fn read(buff: &[u8], _: u8) -> Result<Option<Box<dyn Request>>, Error> {
 	if buff.len() < size_of::<QueryExtensionHdr>() {
 		return Ok(None);
 	}

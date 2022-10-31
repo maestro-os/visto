@@ -1,6 +1,7 @@
 //! This module implements the X protocol.
 
 pub mod connect;
+pub mod error;
 pub mod request;
 
 /// Major version of the protocol.

@@ -1,5 +1,7 @@
 //! This module implements Graphics Contexts (GC).
 
+use crate::protocol::error::Error;
+
 /// TODO doc
 #[derive(Clone)]
 pub enum Function {
@@ -38,7 +40,7 @@ pub enum Function {
 }
 
 impl TryFrom<u8> for Function {
-	type Error = &'static str;
+	type Error = Error;
 
 	fn try_from(v: u8) -> Result<Self, Self::Error> {
 		match v {
@@ -59,7 +61,7 @@ impl TryFrom<u8> for Function {
 			14 => Ok(Self::Nand),
 			15 => Ok(Self::Set),
 
-			_ => Err("Invalid GC function number"),
+			_ => Err(Error::Value(v as _)),
 		}
 	}
 }
@@ -76,7 +78,7 @@ pub enum LineStyle {
 }
 
 impl TryFrom<u8> for LineStyle {
-	type Error = &'static str;
+	type Error = Error;
 
 	fn try_from(v: u8) -> Result<Self, Self::Error> {
 		match v {
@@ -84,7 +86,7 @@ impl TryFrom<u8> for LineStyle {
 			1 => Ok(Self::OnOffDash),
 			2 => Ok(Self::DoubleDash),
 
-			_ => Err("Invalid GC line style number"),
+			_ => Err(Error::Value(v as _)),
 		}
 	}
 }
@@ -103,7 +105,7 @@ pub enum CapStyle {
 }
 
 impl TryFrom<u8> for CapStyle {
-	type Error = &'static str;
+	type Error = Error;
 
 	fn try_from(v: u8) -> Result<Self, Self::Error> {
 		match v {
@@ -112,7 +114,7 @@ impl TryFrom<u8> for CapStyle {
 			2 => Ok(Self::Round),
 			3 => Ok(Self::Projecting),
 
-			_ => Err("Invalid GC cap style number"),
+			_ => Err(Error::Value(v as _)),
 		}
 	}
 }
@@ -129,7 +131,7 @@ pub enum JoinStyle {
 }
 
 impl TryFrom<u8> for JoinStyle {
-	type Error = &'static str;
+	type Error = Error;
 
 	fn try_from(v: u8) -> Result<Self, Self::Error> {
 		match v {
@@ -137,7 +139,7 @@ impl TryFrom<u8> for JoinStyle {
 			1 => Ok(Self::OnOffDash),
 			2 => Ok(Self::DoubleDash),
 
-			_ => Err("Invalid GC join style number"),
+			_ => Err(Error::Value(v as _)),
 		}
 	}
 }
@@ -156,7 +158,7 @@ pub enum FillStyle {
 }
 
 impl TryFrom<u8> for FillStyle {
-	type Error = &'static str;
+	type Error = Error;
 
 	fn try_from(v: u8) -> Result<Self, Self::Error> {
 		match v {
@@ -165,7 +167,7 @@ impl TryFrom<u8> for FillStyle {
 			2 => Ok(Self::Stippled),
 			3 => Ok(Self::OpaqueStippled),
 
-			_ => Err("Invalid GC fill style number"),
+			_ => Err(Error::Value(v as _)),
 		}
 	}
 }
@@ -180,14 +182,14 @@ pub enum FillRule {
 }
 
 impl TryFrom<u8> for FillRule {
-	type Error = &'static str;
+	type Error = Error;
 
 	fn try_from(v: u8) -> Result<Self, Self::Error> {
 		match v {
 			0 => Ok(Self::EvenOdd),
 			1 => Ok(Self::Winding),
 
-			_ => Err("Invalid GC fill rule number"),
+			_ => Err(Error::Value(v as _)),
 		}
 	}
 }
@@ -202,14 +204,14 @@ pub enum SubWindowMode {
 }
 
 impl TryFrom<u8> for SubWindowMode {
-	type Error = &'static str;
+	type Error = Error;
 
 	fn try_from(v: u8) -> Result<Self, Self::Error> {
 		match v {
 			0 => Ok(Self::ClipByChildren),
 			1 => Ok(Self::IncludeInferiors),
 
-			_ => Err("Invalid GC subwindow mode number"),
+			_ => Err(Error::Value(v as _)),
 		}
 	}
 }
@@ -224,14 +226,14 @@ pub enum ArcMode {
 }
 
 impl TryFrom<u8> for ArcMode {
-	type Error = &'static str;
+	type Error = Error;
 
 	fn try_from(v: u8) -> Result<Self, Self::Error> {
 		match v {
 			0 => Ok(Self::Chord),
 			1 => Ok(Self::PieSlice),
 
-			_ => Err("Invalid GC arc mode number"),
+			_ => Err(Error::Value(v as _)),
 		}
 	}
 }

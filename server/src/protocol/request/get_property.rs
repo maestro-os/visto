@@ -2,10 +2,8 @@
 
 use crate::ctx::Context;
 use crate::ctx::client::Client;
-use crate::gc::GC;
-use crate::gc;
+use crate::protocol::error::Error;
 use crate::util;
-use std::error::Error;
 use std::mem::size_of;
 use super::Request;
 
@@ -43,7 +41,7 @@ impl Request for GetProperty {
 		_ctx: &mut Context,
 		client: &mut Client,
 		_seq_nbr: u16,
-	) -> Result<(), Box<dyn Error>> {
+	) -> Result<(), Box<dyn std::error::Error>> {
 		// TODO
 		Ok(())
 	}
@@ -52,7 +50,7 @@ impl Request for GetProperty {
 /// Parses `GetProperty`.
 ///
 /// If `delete` is nonzero, the function deletes the property from the window.
-pub fn read(buff: &[u8], delete: u8) -> Result<Option<Box<dyn Request>>, Box<dyn Error>> {
+pub fn read(buff: &[u8], delete: u8) -> Result<Option<Box<dyn Request>>, Error> {
 	if buff.len() < size_of::<GetPropertyHdr>() {
 		return Ok(None);
 	}

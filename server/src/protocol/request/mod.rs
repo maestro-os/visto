@@ -7,8 +7,9 @@ pub mod query_extension;
 use crate::ctx::Context;
 use crate::ctx::client::Client;
 use crate::protocol::XRequest;
+use crate::protocol::error::Error;
+use crate::protocol::error::XError;
 use crate::util;
-use std::error::Error;
 use std::mem::size_of;
 
 /// Request opcode: CreateWindow
@@ -269,7 +270,7 @@ pub fn build_request(
 	opcode: u8,
 	buff: &[u8],
 	optional: u8,
-) -> Result<Option<Box<dyn Request>>, Box<dyn Error>> {
+) -> Result<Option<Box<dyn Request>>, Error> {
 	// TODO rm
 	println!("=> {}", opcode);
 
@@ -292,7 +293,7 @@ pub fn build_request(
 
 /// A function to call to read a function of a specific type.
 /// Each request type has its own function.
-pub type RequestReadFn = dyn Fn(&[u8], u8) -> Result<Option<Box<dyn Request>>, Box<dyn Error>>;
+pub type RequestReadFn = dyn Fn(&[u8], u8) -> Result<Option<Box<dyn Request>>, Error>;
 
 /// Trait representing a request.
 pub trait Request {
@@ -306,7 +307,7 @@ pub trait Request {
 		ctx: &mut Context,
 		client: &mut Client,
 		seq_nbr: u16,
-	) -> Result<(), Box<dyn Error>>;
+	) -> Result<(), Box<dyn std::error::Error>>;
 }
 
 /// Trait representing an object used to read a request.
@@ -319,7 +320,7 @@ pub trait RequestReader {
 		&self,
 		ctx: &Context,
 		buff: &[u8],
-	) -> Result<Option<(Box<dyn Request>, usize)>, Box<dyn Error>>;
+	) -> Result<Option<(Box<dyn Request>, usize)>, XError>;
 }
 
 /// The default request reader.
@@ -330,7 +331,7 @@ impl RequestReader for DefaultRequestReader {
 		&self,
 		ctx: &Context,
 		buff: &[u8],
-	) -> Result<Option<(Box<dyn Request>, usize)>, Box<dyn Error>> {
+	) -> Result<Option<(Box<dyn Request>, usize)>, XError> {
 		// If not enough bytes are available, return
 		let hdr_len = size_of::<XRequest>();
 		if buff.len() < hdr_len {
@@ -343,20 +344,26 @@ impl RequestReader for DefaultRequestReader {
 		// Required number of bytes
 		let req = hdr.length as usize * 4;
 
+		let opcode = hdr.major_opcode;
+
 		// If the request is too long, ignore it
 		if req > MAX_REQUEST_LEN {
-			// TODO
-			todo!();
+			let err = Error::Length;
+			// TODO seq nbr
+			return Err(err.to_protocol(0, 0, opcode));
 		}
 		// If not enough bytes are available, return
 		if buff.len() < req {
 			return Ok(None);
 		}
 
-		let opcode = hdr.major_opcode;
 		let buff = &buff[hdr_len..req];
 
-		let request = build_request(ctx, opcode, buff, hdr.optional)?;
-		Ok(request.map(|r| (r, req)))
+		match build_request(ctx, opcode, buff, hdr.optional) {
+			Ok(request) => Ok(request.map(|r| (r, req))),
+
+			// TODO seq nbr
+			Err(e) => Err(e.to_protocol(0, 0, opcode)),
+		}
 	}
 }

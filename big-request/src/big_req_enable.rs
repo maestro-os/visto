@@ -1,14 +1,14 @@
-//! This module implements the `BigReqEnable` request.
+//! This `BigReqEnable` request allows to enable big requests.
 
 use crate::BigRequestReader;
-use std::error::Error;
 use visto::ctx::Context;
 use visto::ctx::client::Client;
+use visto::protocol::error::Error;
 use visto::protocol::request::MAX_REQUEST_LEN;
 use visto::protocol::request::Request;
 use visto::protocol;
 
-/// TODO doc
+/// Reply to `BigReqEnable`.
 #[repr(C, packed)]
 pub struct BigReqEnableReply {
 	/// The type of the reply (normal).
@@ -27,7 +27,7 @@ pub struct BigReqEnableReply {
 	_padding1: u16,
 }
 
-/// TODO doc
+/// Structure representing the `BigReqEnable` request.
 pub struct BigReqEnable {}
 
 impl Request for BigReqEnable {
@@ -36,7 +36,7 @@ impl Request for BigReqEnable {
 		_ctx: &mut Context,
 		client: &mut Client,
 		seq_nbr: u16,
-	) -> Result<(), Box<dyn Error>> {
+	) -> Result<(), Box<dyn std::error::Error>> {
 		client.set_request_reader(Box::new(BigRequestReader {}));
 
 		let reply = BigReqEnableReply {
@@ -49,17 +49,17 @@ impl Request for BigReqEnable {
 
 			_padding1: 0,
 		};
-		client.write_reply(&reply)?;
+		client.write_obj(&reply)?;
 
 		Ok(())
 	}
 }
 
-/// TODO doc
-pub fn read(buff: &[u8], _: u8) -> Result<Option<Box<dyn Request>>, Box<dyn Error>> {
-	if !buff.is_empty() {
-		return Err("TODO".into()); // TODO
+/// Parses `BigReqEnable`.
+pub fn read(buff: &[u8], _: u8) -> Result<Option<Box<dyn Request>>, Error> {
+	if buff.is_empty() {
+		Ok(Some(Box::new(BigReqEnable {})))
+	} else {
+		Err(Error::Length)
 	}
-
-	Ok(Some(Box::new(BigReqEnable {})))
 }

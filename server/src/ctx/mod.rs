@@ -1,6 +1,7 @@
 //! TODO doc
 
 pub mod client;
+pub mod gc;
 pub mod screen;
 pub mod window;
 

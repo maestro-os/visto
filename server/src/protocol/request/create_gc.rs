@@ -2,10 +2,10 @@
 
 use crate::ctx::Context;
 use crate::ctx::client::Client;
-use crate::gc::GC;
-use crate::gc;
+use crate::ctx::gc::GC;
+use crate::ctx::gc;
+use crate::protocol::error::Error;
 use crate::util;
-use std::error::Error;
 use std::mem::size_of;
 use super::Request;
 
@@ -35,14 +35,14 @@ impl Request for CreateGC {
 		_ctx: &mut Context,
 		client: &mut Client,
 		_seq_nbr: u16,
-	) -> Result<(), Box<dyn Error>> {
+	) -> Result<(), Box<dyn std::error::Error>> {
 		client.set_gc(self.cid, self.gc.clone());
 		Ok(())
 	}
 }
 
 /// Parses `CreateGC`.
-pub fn read(buff: &[u8], _: u8) -> Result<Option<Box<dyn Request>>, Box<dyn Error>> {
+pub fn read(buff: &[u8], _: u8) -> Result<Option<Box<dyn Request>>, Error> {
 	if buff.len() < size_of::<CreateGCHdr>() {
 		return Ok(None);
 	}
@@ -93,7 +93,6 @@ pub fn read(buff: &[u8], _: u8) -> Result<Option<Box<dyn Request>>, Box<dyn Erro
 		};
 		off += size;
 
-		// TODO Handle errors
 		let val = match id {
 			0 => gc::Value::Function((val as u8).try_into()?),
 			1 => gc::Value::PlaneMask(val),
