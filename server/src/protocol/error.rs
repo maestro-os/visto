@@ -1,6 +1,7 @@
-//! This module implements error replies.
+//! This module implements errors.
 
 use crate::protocol;
+use std::fmt;
 
 /// Structure representing an error in the protocol's format.
 #[repr(C, packed)]
@@ -25,6 +26,7 @@ pub struct XError {
 }
 
 /// Structure representing a custom error.
+#[derive(Debug)]
 pub struct CustomError {
 	/// The error code.
 	pub code: u8,
@@ -36,6 +38,7 @@ pub struct CustomError {
 }
 
 /// Enumeration of X protocol errors.
+#[derive(Debug)]
 pub enum Error {
 	/// TODO doc
 	Request,
@@ -146,3 +149,12 @@ impl Error {
 		}
 	}
 }
+
+impl fmt::Display for Error {
+	fn fmt(&self, _fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
+		// TODO
+		todo!();
+	}
+}
+
+impl std::error::Error for Error {}

@@ -3,7 +3,6 @@
 #![feature(linked_list_cursors)]
 #![feature(step_trait)]
 
-pub mod atom;
 pub mod ctx;
 pub mod drm;
 pub mod extension;

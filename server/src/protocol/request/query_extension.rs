@@ -65,6 +65,7 @@ impl Request for QueryExtension {
 			None
 		});
 		let present = ext.is_some();
+		println!("Querying extension `{}`. Present: {}", self.name, present);
 
 		let (
 			major_opcode,

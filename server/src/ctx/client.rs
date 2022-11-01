@@ -95,6 +95,12 @@ impl Client {
 		self.sequence_number.0
 	}
 
+	/// Writes the given slice.
+	pub fn write(&mut self, data: &[u8]) -> io::Result<()> {
+		self.stream.write(&data)?;
+		self.stream.flush()
+	}
+
 	/// Writes the given object.
 	pub fn write_obj<T>(&mut self, obj: &T) -> io::Result<()> {
 		let slice = unsafe {
@@ -107,8 +113,7 @@ impl Client {
 			data[i] = slice[i];
 		}
 
-		self.stream.write(&data)?;
-		self.stream.flush()
+		self.write(&data)
 	}
 
 	/// Writes a connect failed message with the given reason.
