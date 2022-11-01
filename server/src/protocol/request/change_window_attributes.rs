@@ -31,8 +31,8 @@ impl Request for ChangeWindowAttributes {
 	fn handle(
 		&self,
 		ctx: &mut Context,
-		client: &mut Client,
-		seq_nbr: u16,
+		_client: &mut Client,
+		_seq_nbr: u16,
 	) -> Result<(), Box<dyn std::error::Error>> {
 		let win = ctx.get_window_mut(self.window)
 			.ok_or(Box::new(Error::Window(self.window)))?;

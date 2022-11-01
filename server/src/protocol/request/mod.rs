@@ -7,6 +7,7 @@ pub mod get_property;
 pub mod get_selection_owner;
 pub mod get_window_attributes;
 pub mod intern_atom;
+pub mod no_operation;
 pub mod query_extension;
 
 use crate::ctx::Context;
@@ -293,8 +294,10 @@ pub fn build_request(
 		GET_SELECTION_OWNER => get_selection_owner::read(buff, optional),
 		CREATE_GC => create_gc::read(buff, optional),
 		QUERY_EXTENSION => query_extension::read(buff, optional),
+		NO_OPERATION => no_operation::read(buff, optional),
 
-		_ => Err(Error::Request),
+		// TODO _ => Err(Error::Request),
+		_ => Ok(None),
 	}
 }
 

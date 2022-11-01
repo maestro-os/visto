@@ -171,7 +171,7 @@ impl fmt::Display for Error {
 			Self::Length => write!(fmt, "Length"),
 			Self::Implementation => write!(fmt, "Implementation"),
 
-			Self::Custom(CustomError) => write!(fmt, "Custom"),
+			Self::Custom(_) => write!(fmt, "Custom"),
 		}
 	}
 }
