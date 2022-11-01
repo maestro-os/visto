@@ -2,7 +2,7 @@ name: Check
 on: push
 jobs:
     check:
-        runs-on: [linux]
+        runs-on: [self-hosted, linux]
         steps:
             - uses: actions/checkout@v2
             - uses: actions-rs/toolchain@v1
