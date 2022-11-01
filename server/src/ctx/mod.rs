@@ -161,6 +161,37 @@ impl Context {
 		self.atoms.get(&id)
 	}
 
+	/// Returns the ID of the atom with the given name.
+	pub fn get_atom_from_name(&self, name: &str) -> Option<u32> {
+		// TODO Optimize
+		self.atoms.iter()
+			.filter_map(|(i, n)| {
+				if n == name {
+					Some(i)
+				} else {
+					None
+				}
+			})
+			.cloned()
+			.next()
+	}
+
+	/// Creates an atom with the given name and returns its ID.
+	pub fn create_atom(&mut self, name: String) -> u32 {
+		// TODO use clean atom ID allocator
+		let mut id = 0;
+		for i in 1..=((1 << 29) - 1) {
+			if !self.atoms.contains_key(&i) {
+				id = i;
+				break;
+			}
+		}
+		assert!(id != 0);
+
+		self.atoms.insert(id, name);
+		id
+	}
+
 	/// Adds a new client.
 	///
 	/// `poll_handler` is the poll handler on which the stream is to be registered.

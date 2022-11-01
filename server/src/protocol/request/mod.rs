@@ -2,6 +2,7 @@
 
 pub mod create_gc;
 pub mod get_property;
+pub mod intern_atom;
 pub mod query_extension;
 
 use crate::ctx::Context;
@@ -281,6 +282,7 @@ pub fn build_request(
 
 	let request = match opcode {
 		// TODO
+		INTERN_ATOM => intern_atom::read(buff, optional)?,
 		GET_PROPERTY => get_property::read(buff, optional)?,
 		CREATE_GC => create_gc::read(buff, optional)?,
 		QUERY_EXTENSION => query_extension::read(buff, optional)?,
