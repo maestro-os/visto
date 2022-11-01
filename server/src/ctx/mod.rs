@@ -13,7 +13,25 @@ use screen::Screen;
 use std::cell::UnsafeCell;
 use std::collections::HashMap;
 use std::collections::LinkedList;
+use std::num::NonZeroU32;
 use window::Window;
+
+// TODO Move in its own module?
+/// TODO doc
+pub struct Selection {
+	/// The window ID of the owner of the selection.
+	owner: Option<NonZeroU32>,
+
+	// TODO
+}
+
+impl Selection {
+	/// Returns the owner of the selection. If the selection has no owner, the function
+	/// returns None.
+	pub fn get_owner(&self) -> Option<NonZeroU32> {
+		self.owner
+	}
+}
 
 /// Structure representing a context.
 pub struct Context {
@@ -24,6 +42,8 @@ pub struct Context {
 
 	/// The list of atoms on the server. The key is the ID of the atom.
 	atoms: HashMap<u32, String>,
+	/// The list of selections on the server. The key is the name of the selection.
+	selections: HashMap<String, Selection>,
 
 	/// The list of clients.
 	/// An unsafe cell is used to allow double borrow of the context.
@@ -111,6 +131,7 @@ impl Context {
 				(67, "WM_CLASS".to_owned()),
 				(68, "WM_TRANSIENT_FOR".to_owned()),
 			]),
+			selections: HashMap::new(),
 
 			clients: UnsafeCell::new(LinkedList::new()),
 
@@ -190,6 +211,12 @@ impl Context {
 
 		self.atoms.insert(id, name);
 		id
+	}
+
+	/// Returns the selection with the given name. If the selection doesn't exist, the function
+	/// returns None.
+	pub fn get_selection(&self, name: &str) -> Option<&Selection> {
+		self.selections.get(name)
 	}
 
 	/// Adds a new client.

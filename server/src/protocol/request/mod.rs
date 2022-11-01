@@ -2,6 +2,7 @@
 
 pub mod create_gc;
 pub mod get_property;
+pub mod get_selection_owner;
 pub mod intern_atom;
 pub mod query_extension;
 
@@ -284,6 +285,7 @@ pub fn build_request(
 		// TODO
 		INTERN_ATOM => intern_atom::read(buff, optional)?,
 		GET_PROPERTY => get_property::read(buff, optional)?,
+		GET_SELECTION_OWNER => get_selection_owner::read(buff, optional)?,
 		CREATE_GC => create_gc::read(buff, optional)?,
 		QUERY_EXTENSION => query_extension::read(buff, optional)?,
 
