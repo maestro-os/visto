@@ -1,6 +1,11 @@
 //! TODO doc
 
+use crate::protocol::BackingStore;
+use crate::protocol::BitGravity;
+use crate::protocol::Class;
+use crate::protocol::MapState;
 use crate::protocol::Rectangle;
+use crate::protocol::WinGravity;
 use std::collections::HashMap;
 
 /// A property associated to a window.
@@ -31,24 +36,97 @@ impl Property {
 	}
 }
 
+/// Structure storing a window's attributes.
+pub struct WindowAttributes {
+	/// TODO doc
+	pub background_pixmap: u32,
+	/// TODO doc
+	pub background_pixel: u32,
+	/// TODO doc
+	pub border_pixmap: u32,
+	/// TODO doc
+	pub border_pixel: u32,
+	/// TODO doc
+	pub bit_gravity: BitGravity,
+	/// TODO doc
+	pub win_gravity: WinGravity,
+	/// TODO doc
+	pub backing_store: BackingStore,
+	/// TODO doc
+	pub backing_planes: u32,
+	/// TODO doc
+	pub backing_pixel: u32,
+	/// TODO doc
+	pub override_redirect: bool,
+	/// TODO doc
+	pub save_under: bool,
+	/// TODO doc
+	pub event_mask: u32,
+	/// TODO doc
+	pub do_not_propagate_mask: u32,
+	/// TODO doc
+	pub colormap: u32,
+	/// TODO doc
+	pub cursor: u32,
+
+	/// TODO doc
+	pub visual: u32,
+	/// TODO doc
+	pub class: Class,
+	/// TODO doc
+	pub backing_places: u32,
+	/// TODO doc
+	pub map_is_installed: u8,
+	/// TODO doc
+	pub map_state: MapState,
+}
+
+impl Default for WindowAttributes {
+	fn default() -> Self {
+		// TODO Set correct values
+		Self {
+			background_pixmap: 0,
+			background_pixel: 0,
+			border_pixmap: 0,
+			border_pixel: 0,
+			bit_gravity: BitGravity::Forget,
+			win_gravity: WinGravity::Unmap,
+			backing_store: BackingStore::NotUseful,
+			backing_planes: 0,
+			backing_pixel: 0,
+			override_redirect: false,
+			save_under: false,
+			event_mask: 0,
+			do_not_propagate_mask: 0,
+			colormap: 0,
+			cursor: 0,
+
+			visual: 0,
+			class: Class::InputOnly,
+			backing_places: 0,
+			map_is_installed: 0,
+			map_state: MapState::Unviewable,
+		}
+	}
+}
+
 /// A window to be rendered on screen.
 pub struct Window {
 	/// Tells whether the window is a root window.
 	root: bool,
-	/// If true, the window has class InputOutput. If false, the function is InputOnly.
-	output: bool,
 
 	/// The depth of the pixmap.
 	depth: u8,
-
 	/// The position and size of the window.
 	rect: Rectangle,
-
 	/// The width of the window's border.
 	border_width: u16,
 
 	/// The list of properties of the window. The key is the name of the property.
 	properties: HashMap<String, Property>,
+
+	/// The window's attributes.
+	pub attributes: WindowAttributes,
 }
 
 impl Window {
@@ -57,7 +135,6 @@ impl Window {
 	pub fn new_root() -> Self {
 		Self {
 			root: true,
-			output: true,
 
 			depth: 24, // TODO
 
@@ -72,6 +149,8 @@ impl Window {
 			border_width: 0,
 
 			properties: HashMap::new(),
+
+			attributes: WindowAttributes::default(),
 		}
 	}
 

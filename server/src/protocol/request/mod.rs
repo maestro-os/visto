@@ -1,8 +1,11 @@
 //! This module implements each requests of the X protocol.
 
+pub mod change_window_attributes;
 pub mod create_gc;
+pub mod create_window;
 pub mod get_property;
 pub mod get_selection_owner;
+pub mod get_window_attributes;
 pub mod intern_atom;
 pub mod query_extension;
 
@@ -281,18 +284,18 @@ pub fn build_request(
 		None => {},
 	}
 
-	let request = match opcode {
-		// TODO
-		INTERN_ATOM => intern_atom::read(buff, optional)?,
-		GET_PROPERTY => get_property::read(buff, optional)?,
-		GET_SELECTION_OWNER => get_selection_owner::read(buff, optional)?,
-		CREATE_GC => create_gc::read(buff, optional)?,
-		QUERY_EXTENSION => query_extension::read(buff, optional)?,
+	match opcode {
+		CREATE_WINDOW => create_window::read(buff, optional),
+		CHANGE_WINDOW_ATTRIBUTES => change_window_attributes::read(buff, optional),
+		GET_WINDOW_ATTRIBUTES => get_window_attributes::read(buff, optional),
+		INTERN_ATOM => intern_atom::read(buff, optional),
+		GET_PROPERTY => get_property::read(buff, optional),
+		GET_SELECTION_OWNER => get_selection_owner::read(buff, optional),
+		CREATE_GC => create_gc::read(buff, optional),
+		QUERY_EXTENSION => query_extension::read(buff, optional),
 
-		_ => None, // TODO Error instead?
-	};
-
-	Ok(request)
+		_ => Err(Error::Request),
+	}
 }
 
 /// A function to call to read a function of a specific type.

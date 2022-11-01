@@ -151,9 +151,28 @@ impl Error {
 }
 
 impl fmt::Display for Error {
-	fn fmt(&self, _fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
-		// TODO
-		todo!();
+	fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
+		match self {
+			Self::Request => write!(fmt, "Request"),
+			Self::Value(val) => write!(fmt, "Value (value: {})", val),
+			Self::Window(val) => write!(fmt, "Window (value: {})", val),
+			Self::Pixmap(val) => write!(fmt, "Pixmap (value: {})", val),
+			Self::Atom(val) => write!(fmt, "Atom (value: {})", val),
+			Self::Cursor(val) => write!(fmt, "Cursor (value: {})", val),
+			Self::Font(val) => write!(fmt, "Font (value: {})", val),
+			Self::Match => write!(fmt, "Match"),
+			Self::Drawable(val) => write!(fmt, "Drawable (value: {})", val),
+			Self::Access => write!(fmt, "Access"),
+			Self::Alloc => write!(fmt, "Alloc"),
+			Self::Colormap(val) => write!(fmt, "Colormap (value: {})", val),
+			Self::GContext(val) => write!(fmt, "GContext (value: {})", val),
+			Self::IDChoice(val) => write!(fmt, "IDChoice (value: {})", val),
+			Self::Name => write!(fmt, "Name"),
+			Self::Length => write!(fmt, "Length"),
+			Self::Implementation => write!(fmt, "Implementation"),
+
+			Self::Custom(CustomError) => write!(fmt, "Custom"),
+		}
 	}
 }
 

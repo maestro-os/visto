@@ -5,6 +5,8 @@ pub mod error;
 pub mod event;
 pub mod request;
 
+use error::Error;
+
 /// Major version of the protocol.
 pub const MAJOR_VERSION: u16 = 11;
 /// Minor version of the protocol.
@@ -30,6 +32,39 @@ pub struct XRequest {
 }
 
 /// TODO doc
+#[derive(Clone, Copy)]
+#[repr(u16)]
+pub enum Class {
+	CopyFromParent = 0,
+	InputOutput = 1,
+	InputOnly = 2,
+}
+
+/// TODO doc
+#[derive(Clone, Copy)]
+#[repr(u8)]
+pub enum BackingStore {
+	NotUseful = 0,
+	WhenMapped = 1,
+	Always = 2,
+}
+
+impl TryFrom<u8> for BackingStore {
+	type Error = Error;
+
+	fn try_from(v: u8) -> Result<Self, Self::Error> {
+		match v {
+			0 => Ok(Self::NotUseful),
+			1 => Ok(Self::WhenMapped),
+			2 => Ok(Self::Always),
+
+			_ => Err(Error::Value(v as _)),
+		}
+	}
+}
+
+/// TODO doc
+#[derive(Clone, Copy)]
 #[repr(u8)]
 pub enum BitGravity {
 	Forget = 0,
@@ -45,7 +80,30 @@ pub enum BitGravity {
 	Static = 10,
 }
 
+impl TryFrom<u8> for BitGravity {
+	type Error = Error;
+
+	fn try_from(v: u8) -> Result<Self, Self::Error> {
+		match v {
+			0 => Ok(Self::Forget),
+			1 => Ok(Self::NorthWest),
+			2 => Ok(Self::North),
+			3 => Ok(Self::NorthEast),
+			4 => Ok(Self::West),
+			5 => Ok(Self::Center),
+			6 => Ok(Self::East),
+			7 => Ok(Self::SouthWest),
+			8 => Ok(Self::South),
+			9 => Ok(Self::SouthEast),
+			10 => Ok(Self::Static),
+
+			_ => Err(Error::Value(v as _)),
+		}
+	}
+}
+
 /// TODO doc
+#[derive(Clone, Copy)]
 #[repr(u8)]
 pub enum WinGravity {
 	Unmap = 0,
@@ -61,7 +119,39 @@ pub enum WinGravity {
 	Static = 10,
 }
 
+impl TryFrom<u8> for WinGravity {
+	type Error = Error;
+
+	fn try_from(v: u8) -> Result<Self, Self::Error> {
+		match v {
+			0 => Ok(Self::Unmap),
+			1 => Ok(Self::NorthWest),
+			2 => Ok(Self::North),
+			3 => Ok(Self::NorthEast),
+			4 => Ok(Self::West),
+			5 => Ok(Self::Center),
+			6 => Ok(Self::East),
+			7 => Ok(Self::SouthWest),
+			8 => Ok(Self::South),
+			9 => Ok(Self::SouthEast),
+			10 => Ok(Self::Static),
+
+			_ => Err(Error::Value(v as _)),
+		}
+	}
+}
+
+/// TODO doc
+#[derive(Clone, Copy)]
+#[repr(u8)]
+pub enum MapState {
+	Unmapped = 0,
+	Unviewable = 1,
+	Viewable = 2,
+}
+
 /// Enumeration of events.
+#[derive(Clone, Copy)]
 #[repr(u32)]
 pub enum Event {
 	KeyPress = 0x00000001,

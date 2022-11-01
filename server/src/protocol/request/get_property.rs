@@ -81,10 +81,10 @@ impl Request for GetProperty {
 			let data = prop.get_data();
 
 			let start_off = 4 * self.long_offset as usize;
-			let len = min(data.len() - start_off, 4 * self.long_length as usize);
-			if len < 0 {
+			if start_off > data.len() {
 				return Err(Box::new(Error::Value(self.long_offset)));
 			}
+			let len = min(data.len() - start_off, 4 * self.long_length as usize);
 			let bytes_after = data.len() - (start_off + len);
 
 			let data = data[start_off..(start_off + len)].to_vec();
