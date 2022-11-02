@@ -3,6 +3,7 @@
 use crate::ctx::Context;
 use crate::ctx::client::Client;
 use crate::protocol::error::Error;
+use crate::protocol::request::HandleError;
 use crate::protocol;
 use crate::util;
 use std::mem::size_of;
@@ -44,9 +45,9 @@ impl Request for GetSelectionOwner {
 		ctx: &mut Context,
 		client: &mut Client,
 		seq_nbr: u16,
-	) -> Result<(), Box<dyn std::error::Error>> {
+	) -> Result<(), HandleError> {
 		let selection_name = ctx.get_atom(self.atom)
-			.ok_or(Box::new(Error::Atom(self.atom)))?;
+			.ok_or(HandleError::Client(Error::Atom(self.atom)))?;
 		let owner = ctx.get_selection(&selection_name)
 			.map(|selection| selection.get_owner())
 			.flatten()
@@ -61,7 +62,8 @@ impl Request for GetSelectionOwner {
 			owner,
 			_padding1: [0; 20],
 		};
-		client.write_obj(&hdr)?;
+		client.write_obj(&hdr)
+			.map_err(|e| HandleError::IO(e))?;
 
 		Ok(())
 	}

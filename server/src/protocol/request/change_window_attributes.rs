@@ -3,6 +3,7 @@
 use crate::ctx::Context;
 use crate::ctx::client::Client;
 use crate::protocol::error::Error;
+use crate::protocol::request::HandleError;
 use crate::util;
 use std::mem::size_of;
 use super::Request;
@@ -33,9 +34,9 @@ impl Request for ChangeWindowAttributes {
 		ctx: &mut Context,
 		_client: &mut Client,
 		_seq_nbr: u16,
-	) -> Result<(), Box<dyn std::error::Error>> {
+	) -> Result<(), HandleError> {
 		let win = ctx.get_window_mut(self.window)
-			.ok_or(Box::new(Error::Window(self.window)))?;
+			.ok_or(HandleError::Client(Error::Window(self.window)))?;
 		create_window::set_attrs(&mut win.attributes, &self.changed_attrs);
 
 		Ok(())

@@ -10,6 +10,7 @@ use crate::protocol::connect::ConnectFailed;
 use crate::protocol::connect::ConnectSuccess;
 use crate::protocol::pad;
 use crate::protocol::request::DefaultRequestReader;
+use crate::protocol::request::HandleError;
 use crate::protocol::request::MAX_REQUEST_LEN;
 use crate::protocol::request::RequestReader;
 use crate::protocol;
@@ -38,6 +39,8 @@ pub enum ClientState {
 
 /// A client of the display server.
 pub struct Client {
+	/// The ID of the client.
+	id: u32,
 	/// The client's socket.
 	stream: Stream,
 
@@ -65,8 +68,13 @@ pub struct Client {
 
 impl Client {
 	/// Creates a new instance with the given socket.
-	pub fn new(stream: Stream) -> Self {
+	///
+	/// Arguments:
+	/// - `id` is the ID of the client.
+	/// - `stream` is the I/O stream associated to the client.
+	pub fn new(id: u32, stream: Stream) -> Self {
 		Self {
+			id,
 			stream,
 
 			buff: vec![0; MAX_REQUEST_LEN],
@@ -82,6 +90,11 @@ impl Client {
 
 			gcs: HashMap::new(),
 		}
+	}
+
+	/// Returns the ID of the client.
+	pub fn get_id(&self) -> u32 {
+		self.id
 	}
 
 	/// Returns an immutable reference to the stream associated with the client.
@@ -332,7 +345,19 @@ impl Client {
 					let seq = self.next_sequence_number();
 
 					// Handle the request
-					request.handle(ctx, self, seq)?;
+					match request.handle(ctx, self, seq) {
+						Ok(_) => {},
+
+						// Client error, send
+						Err(HandleError::Client(e)) => {
+							// TODO opcode
+							let e = e.to_protocol(seq, 0, 0);
+							self.write_obj(&e)?;
+						},
+
+						// IO error, close connection
+						Err(HandleError::IO(e)) => return Err(Box::new(e)),
+					}
 				},
 
 				// No request to handle, break

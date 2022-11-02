@@ -3,6 +3,7 @@
 use crate::ctx::Context;
 use crate::ctx::client::Client;
 use crate::protocol::error::Error;
+use crate::protocol::request::HandleError;
 use crate::protocol;
 use crate::util;
 use std::mem::size_of;
@@ -51,7 +52,7 @@ impl Request for InternAtom {
 		ctx: &mut Context,
 		client: &mut Client,
 		seq_nbr: u16,
-	) -> Result<(), Box<dyn std::error::Error>> {
+	) -> Result<(), HandleError> {
 		let atom = match ctx.get_atom_from_name(&self.name) {
 			Some(atom) => atom,
 			None if !self.only_if_exists => ctx.create_atom(self.name.clone()),
@@ -66,7 +67,8 @@ impl Request for InternAtom {
 			atom,
 			_padding1: [0; 20],
 		};
-		client.write_obj(&hdr)?;
+		client.write_obj(&hdr)
+			.map_err(|e| HandleError::IO(e))?;
 
 		Ok(())
 	}

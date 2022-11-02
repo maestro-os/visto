@@ -13,6 +13,7 @@ pub mod util;
 
 use ctx::Context;
 use ctx::client::Client;
+use id_allocator::IDAllocator;
 use net::Listener;
 use std::env;
 use std::path::Path;
@@ -118,6 +119,7 @@ fn main() {
 			exit(1);
 		});
 
+	let mut client_id_allocator = IDAllocator::from_range(0..8192);
 	loop {
 		// Waiting until something has to be done
 		listener.get_poll_handler().poll();
@@ -127,7 +129,9 @@ fn main() {
 		// Accept a client
 		match listener.accept() {
 			Ok(Some(stream)) => {
-				let client = Client::new(stream);
+				let id = client_id_allocator.alloc().unwrap(); // TODO Handle error
+				let client = Client::new(id, stream);
+
 				ctx.add_client(client, listener.get_poll_handler());
 			},
 

@@ -8,6 +8,7 @@ use crate::protocol::BitGravity;
 use crate::protocol::Class;
 use crate::protocol::WinGravity;
 use crate::protocol::error::Error;
+use crate::protocol::request::HandleError;
 use crate::util;
 use std::mem::size_of;
 use super::Request;
@@ -90,7 +91,7 @@ impl Request for CreateWindow {
 		ctx: &mut Context,
 		client: &mut Client,
 		seq_nbr: u16,
-	) -> Result<(), Box<dyn std::error::Error>> {
+	) -> Result<(), HandleError> {
 		let mut attr = WindowAttributes::default();
 		set_attrs(&mut attr, &self.attrs);
 

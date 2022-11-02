@@ -3,6 +3,7 @@
 use crate::ctx::Context;
 use crate::ctx::client::Client;
 use crate::protocol::error::Error;
+use crate::protocol::request::HandleError;
 use crate::protocol;
 use crate::util;
 use std::cmp::min;
@@ -70,19 +71,19 @@ impl Request for GetProperty {
 		ctx: &mut Context,
 		client: &mut Client,
 		seq_nbr: u16,
-	) -> Result<(), Box<dyn std::error::Error>> {
+	) -> Result<(), HandleError> {
 		let prop_name = ctx.get_atom(self.property)
-			.ok_or(Box::new(Error::Atom(self.property)))?
+			.ok_or(HandleError::Client(Error::Atom(self.property)))?
 			.to_owned();
 		let win = ctx.get_window_mut(self.window)
-			.ok_or(Box::new(Error::Window(self.window)))?;
+			.ok_or(HandleError::Client(Error::Window(self.window)))?;
 
 		if let Some(prop) = win.get_property(&prop_name) {
 			let data = prop.get_data();
 
 			let start_off = 4 * self.long_offset as usize;
 			if start_off > data.len() {
-				return Err(Box::new(Error::Value(self.long_offset)));
+				return Err(HandleError::Client(Error::Value(self.long_offset)));
 			}
 			let len = min(data.len() - start_off, 4 * self.long_length as usize);
 			let bytes_after = data.len() - (start_off + len);
@@ -115,15 +116,18 @@ impl Request for GetProperty {
 				length: (len / (format as usize / 8)) as u32,
 				_padding: [0; 12],
 			};
-			client.write_obj(&hdr)?;
+			client.write_obj(&hdr)
+				.map_err(|e| HandleError::IO(e))?;
 
 			if format != 0 {
 				// Write data
-				client.write(&data)?;
+				client.write(&data)
+					.map_err(|e| HandleError::IO(e))?;
 
 				// Write padding
 				let pad: [u8; 4] = [0; 4];
-				client.write(&pad[..protocol::pad(len)])?;
+				client.write(&pad[..protocol::pad(len)])
+					.map_err(|e| HandleError::IO(e))?;
 			}
 		} else {
 			let hdr = GetPropertyReply {
@@ -136,7 +140,8 @@ impl Request for GetProperty {
 				length: 0,
 				_padding: [0; 12],
 			};
-			client.write_obj(&hdr)?;
+			client.write_obj(&hdr)
+				.map_err(|e| HandleError::IO(e))?;
 		}
 
 		Ok(())

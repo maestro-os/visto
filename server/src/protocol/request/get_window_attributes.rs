@@ -8,6 +8,7 @@ use crate::protocol::Class;
 use crate::protocol::MapState;
 use crate::protocol::WinGravity;
 use crate::protocol::error::Error;
+use crate::protocol::request::HandleError;
 use crate::protocol;
 use crate::util;
 use std::mem::size_of;
@@ -75,9 +76,9 @@ impl Request for GetWindowAttributes {
 		ctx: &mut Context,
 		client: &mut Client,
 		seq_nbr: u16,
-	) -> Result<(), Box<dyn std::error::Error>> {
+	) -> Result<(), HandleError> {
 		let win = ctx.get_window_mut(self.window)
-			.ok_or(Box::new(Error::Window(self.window)))?;
+			.ok_or(HandleError::Client(Error::Window(self.window)))?;
 
 		let hdr = GetWindowAttributesReply {
 			reply_type: protocol::REPLY_TYPE_REPLY,
@@ -100,7 +101,8 @@ impl Request for GetWindowAttributes {
 			do_not_propagate_mask: win.attributes.do_not_propagate_mask as _,
 			_padding: [0; 2],
 		};
-		client.write_obj(&hdr)?;
+		client.write_obj(&hdr)
+			.map_err(|e| HandleError::IO(e))?;
 
 		Ok(())
 	}

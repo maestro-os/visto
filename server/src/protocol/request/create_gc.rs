@@ -5,6 +5,7 @@ use crate::ctx::client::Client;
 use crate::ctx::gc::GC;
 use crate::ctx::gc;
 use crate::protocol::error::Error;
+use crate::protocol::request::HandleError;
 use crate::util;
 use std::mem::size_of;
 use super::Request;
@@ -35,7 +36,7 @@ impl Request for CreateGC {
 		_ctx: &mut Context,
 		client: &mut Client,
 		_seq_nbr: u16,
-	) -> Result<(), Box<dyn std::error::Error>> {
+	) -> Result<(), HandleError> {
 		client.set_gc(self.cid, self.gc.clone());
 		Ok(())
 	}

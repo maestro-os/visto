@@ -4,6 +4,7 @@ use crate::BigRequestReader;
 use visto::ctx::Context;
 use visto::ctx::client::Client;
 use visto::protocol::error::Error;
+use visto::protocol::request::HandleError;
 use visto::protocol::request::MAX_REQUEST_LEN;
 use visto::protocol::request::Request;
 use visto::protocol;
@@ -36,7 +37,7 @@ impl Request for BigReqEnable {
 		_ctx: &mut Context,
 		client: &mut Client,
 		seq_nbr: u16,
-	) -> Result<(), Box<dyn std::error::Error>> {
+	) -> Result<(), HandleError> {
 		client.set_request_reader(Box::new(BigRequestReader {}));
 
 		let reply = BigReqEnableReply {
@@ -49,7 +50,8 @@ impl Request for BigReqEnable {
 
 			_padding1: 0,
 		};
-		client.write_obj(&reply)?;
+		client.write_obj(&reply)
+			.map_err(|e| HandleError::IO(e))?;
 
 		Ok(())
 	}

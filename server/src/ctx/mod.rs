@@ -17,6 +17,29 @@ use std::num::NonZeroU32;
 use window::Window;
 
 // TODO Move in its own module?
+/// Trait representing an object that can be drawn.
+pub trait Drawable {
+	/// Returns the number of bits used to represent a pixel.
+	fn get_depth(&self) -> u8;
+
+	/// Returns the root of the drawable.
+	fn get_root(&self) -> u32;
+
+	/// Returns the X position.
+	fn get_x(&self) -> i16;
+	/// Returns the Y position.
+	fn get_y(&self) -> i16;
+
+	/// Returns the width.
+	fn get_width(&self) -> u16;
+	/// Returns the height.
+	fn get_height(&self) -> u16;
+
+	/// Returns the width of the border.
+	fn get_border_width(&self) -> u16;
+}
+
+// TODO Move in its own module?
 /// TODO doc
 pub struct Selection {
 	/// The window ID of the owner of the selection.
@@ -48,6 +71,8 @@ pub struct Context {
 	/// The list of clients.
 	/// An unsafe cell is used to allow double borrow of the context.
 	clients: UnsafeCell<LinkedList<Client>>,
+	/// The client currently grabbing the server.
+	grabbing_client: Option<u32>,
 
 	/// Requests handlers registered by extensions.
 	/// The key is the major opcode and the value is the handler.
@@ -134,6 +159,7 @@ impl Context {
 			selections: HashMap::new(),
 
 			clients: UnsafeCell::new(LinkedList::new()),
+			grabbing_client: None,
 
 			custom_requests: HashMap::new(),
 		}
@@ -164,6 +190,13 @@ impl Context {
 	/// Returns a mutable reference to the list of screens.
 	pub fn get_screens_mut(&mut self) -> &mut [Screen] {
 		&mut self.screens
+	}
+
+	/// Returns the drawable with the given ID.
+	pub fn get_drawable(&self, id: u32) -> Option<&dyn Drawable> {
+		// TODO Handle pixmaps
+
+		self.get_window(id).map(|d| d as &dyn Drawable)
 	}
 
 	/// Returns an immutable reference to the window with the given ID.
@@ -244,6 +277,13 @@ impl Context {
 				Err(e) => {
 					println!("Client disconnect: {}", e);
 
+					// If the client is grabbing the server, ungrab
+					if let Some(grabbing) = self.grabbing_client.clone() {
+						if grabbing == client.get_id() {
+							self.grabbing_client = None;
+						}
+					}
+
 					if let Some(removed) = cursor.remove_current() {
 						poll_handler.remove_fd(removed.get_stream());
 					}
@@ -264,5 +304,15 @@ impl Context {
 	/// Returns a mutable reference to the list of custom requests.
 	pub fn get_custom_requests_mut(&mut self) -> &mut HashMap<u8, Box<RequestReadFn>> {
 		&mut self.custom_requests
+	}
+
+	/// Makes the server be grabbed by the given client.
+	pub fn grab_by(&mut self, client: &Client) {
+		self.grabbing_client = Some(client.get_id());
+	}
+
+	/// Ungrabs the server.
+	pub fn ungrab(&mut self) {
+		self.grabbing_client = None;
 	}
 }

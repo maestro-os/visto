@@ -3,6 +3,7 @@
 use crate::ctx::Context;
 use crate::ctx::client::Client;
 use crate::protocol::error::Error;
+use crate::protocol::request::HandleError;
 use crate::protocol;
 use crate::util;
 use std::mem::size_of;
@@ -46,9 +47,9 @@ impl Request for GetAtomName {
 		ctx: &mut Context,
 		client: &mut Client,
 		seq_nbr: u16,
-	) -> Result<(), Box<dyn std::error::Error>> {
+	) -> Result<(), HandleError> {
 		let atom = ctx.get_atom(self.atom)
-			.ok_or(Box::new(Error::Atom(self.atom)))?;
+			.ok_or(HandleError::Client(Error::Atom(self.atom)))?;
 
 		let len = atom.len();
 		let pad = protocol::pad(len);
@@ -65,14 +66,17 @@ impl Request for GetAtomName {
 
 			_padding1: [0; 22],
 		};
-		client.write_obj(&hdr)?;
+		client.write_obj(&hdr)
+			.map_err(|e| HandleError::IO(e))?;
 
 		// Write name
-		client.write(atom.as_bytes());
+		client.write(atom.as_bytes())
+			.map_err(|e| HandleError::IO(e))?;
 
 		// Write padding
 		let pad: [u8; 4] = [0; 4];
-		client.write(&pad[..protocol::pad(len)])?;
+		client.write(&pad[..protocol::pad(len)])
+			.map_err(|e| HandleError::IO(e))?;
 
 		Ok(())
 	}

@@ -7,6 +7,7 @@ use crate::protocol::MapState;
 use crate::protocol::Rectangle;
 use crate::protocol::WinGravity;
 use std::collections::HashMap;
+use super::Drawable;
 
 /// A property associated to a window.
 pub struct Property {
@@ -178,5 +179,36 @@ impl Window {
 	/// nothing.
 	pub fn delete_property(&mut self, name: &str) {
 		self.properties.remove(name);
+	}
+}
+
+impl Drawable for Window {
+	fn get_depth(&self) -> u8 {
+		self.depth
+	}
+
+	fn get_root(&self) -> u32 {
+		// TODO
+		0
+	}
+
+	fn get_x(&self) -> i16 {
+		self.rect.x
+	}
+
+	fn get_y(&self) -> i16 {
+		self.rect.y
+	}
+
+	fn get_width(&self) -> u16 {
+		self.rect.width
+	}
+
+	fn get_height(&self) -> u16 {
+		self.rect.height
+	}
+
+	fn get_border_width(&self) -> u16 {
+		self.border_width
 	}
 }

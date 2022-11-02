@@ -3,6 +3,7 @@
 use crate::ctx::Context;
 use crate::ctx::client::Client;
 use crate::protocol::error::Error;
+use crate::protocol::request::HandleError;
 use super::Request;
 
 /// Header of the `UngrabServer` request.
@@ -15,11 +16,11 @@ pub struct UngrabServer {}
 impl Request for UngrabServer {
 	fn handle(
 		&self,
-		_ctx: &mut Context,
+		ctx: &mut Context,
 		_client: &mut Client,
 		_seq_nbr: u16,
-	) -> Result<(), Box<dyn std::error::Error>> {
-		// TODO
+	) -> Result<(), HandleError> {
+		ctx.ungrab();
 		Ok(())
 	}
 }

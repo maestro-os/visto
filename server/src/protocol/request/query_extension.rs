@@ -10,6 +10,7 @@ use crate::util;
 use std::mem::size_of;
 use std::str::FromStr;
 use std::str;
+use super::HandleError;
 use super::Request;
 
 /// The header of the request.
@@ -59,7 +60,7 @@ impl Request for QueryExtension {
 		ctx: &mut Context,
 		client: &mut Client,
 		seq_nbr: u16,
-	) -> Result<(), Box<dyn std::error::Error>> {
+	) -> Result<(), HandleError> {
 		let ext = extension::query(ctx, &self.name).unwrap_or_else(|e| {
 			eprintln!("Couldn't load extension `{}`: {}", self.name, e);
 			None
@@ -98,7 +99,8 @@ impl Request for QueryExtension {
 
 			_padding1: [0; 20],
 		};
-		client.write_obj(&reply)?;
+		client.write_obj(&reply)
+			.map_err(|e| HandleError::IO(e))?;
 
 		Ok(())
 	}

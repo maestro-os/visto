@@ -4,6 +4,7 @@ pub mod change_window_attributes;
 pub mod create_gc;
 pub mod create_window;
 pub mod get_atom_name;
+pub mod get_geometry;
 pub mod get_property;
 pub mod get_selection_owner;
 pub mod get_window_attributes;
@@ -19,6 +20,7 @@ use crate::protocol::XRequest;
 use crate::protocol::error::Error;
 use crate::protocol::error::XError;
 use crate::util;
+use std::io;
 use std::mem::size_of;
 
 /// Request opcode: CreateWindow
@@ -292,6 +294,7 @@ pub fn build_request(
 		CREATE_WINDOW => create_window::read(buff, optional),
 		CHANGE_WINDOW_ATTRIBUTES => change_window_attributes::read(buff, optional),
 		GET_WINDOW_ATTRIBUTES => get_window_attributes::read(buff, optional),
+		GET_GEOMETRY => get_geometry::read(buff, optional),
 		INTERN_ATOM => intern_atom::read(buff, optional),
 		GET_ATOM_NAME => get_atom_name::read(buff, optional),
 		GET_PROPERTY => get_property::read(buff, optional),
@@ -311,6 +314,14 @@ pub fn build_request(
 /// Each request type has its own function.
 pub type RequestReadFn = dyn Fn(&[u8], u8) -> Result<Option<Box<dyn Request>>, Error>;
 
+/// An enumeration of request handle errors.
+pub enum HandleError {
+	/// Client error, must be notified.
+	Client(Error),
+	/// I/O error, cannot be recovered.
+	IO(io::Error),
+}
+
 /// Trait representing a request.
 pub trait Request {
 	/// Handles the request for the given client.
@@ -323,7 +334,7 @@ pub trait Request {
 		ctx: &mut Context,
 		client: &mut Client,
 		seq_nbr: u16,
-	) -> Result<(), Box<dyn std::error::Error>>;
+	) -> Result<(), HandleError>;
 }
 
 /// Trait representing an object used to read a request.
@@ -378,7 +389,7 @@ impl RequestReader for DefaultRequestReader {
 		match build_request(ctx, opcode, buff, hdr.optional) {
 			Ok(request) => Ok(request.map(|r| (r, req))),
 
-			// TODO seq nbr
+			// TODO seq nbr and opcode
 			Err(e) => Err(e.to_protocol(0, 0, opcode)),
 		}
 	}
