@@ -7,8 +7,6 @@ use crate::protocol::request::HandleError;
 use crate::protocol;
 use crate::util;
 use std::mem::size_of;
-use std::str::FromStr;
-use std::str;
 use super::Request;
 
 /// The header of the request's reply.
@@ -60,6 +58,7 @@ impl Request for GetGeometry {
 	) -> Result<(), HandleError> {
 		let drawable = ctx.get_drawable(self.drawable)
 			.ok_or(HandleError::Client(Error::Drawable(self.drawable)))?;
+		let rect = drawable.get_rectangle();
 
 		let reply = GetGeometryReply {
 			reply_type: protocol::REPLY_TYPE_REPLY,
@@ -67,10 +66,10 @@ impl Request for GetGeometry {
 			seq_nbr,
 			reply_length: 0,
 			root: drawable.get_root(),
-			x: drawable.get_x(),
-			y: drawable.get_y(),
-			width: drawable.get_width(),
-			height: drawable.get_height(),
+			x: rect.x,
+			y: rect.y,
+			width: rect.width,
+			height: rect.height,
 			border_width: drawable.get_border_width(),
 			_padding: [0; 10],
 		};

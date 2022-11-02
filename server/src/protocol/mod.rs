@@ -243,6 +243,7 @@ pub struct Point {
 }
 
 /// A rectangle.
+#[derive(Clone)]
 pub struct Rectangle {
 	/// X position.
 	pub x: i16,

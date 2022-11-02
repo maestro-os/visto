@@ -115,6 +115,8 @@ impl Default for WindowAttributes {
 pub struct Window {
 	/// Tells whether the window is a root window.
 	root: bool,
+	/// The ID of the parent window.
+	parent: u32,
 
 	/// The depth of the pixmap.
 	depth: u8,
@@ -132,21 +134,23 @@ pub struct Window {
 
 impl Window {
 	/// Creates a new root window.
-	/// By default, the window has size 0*0.
-	pub fn new_root() -> Self {
+	///
+	/// Arguments:
+	/// - `width` is the width of the window.
+	/// - `height` is the height of the window.
+	pub fn new_root(width: u16, height: u16) -> Self {
 		Self {
 			root: true,
+			parent: 0,
 
 			depth: 24, // TODO
-
 			rect: Rectangle {
 				x: 0,
 				y: 0,
 
-				width: 0,
-				height: 0,
+				width,
+				height,
 			},
-
 			border_width: 0,
 
 			properties: HashMap::new(),
@@ -155,9 +159,29 @@ impl Window {
 		}
 	}
 
-	/// Returns the position and size of the window.
-	pub fn get_rectangle(&self) -> &Rectangle {
-		&self.rect
+	/// Creates a window.
+	///
+	/// Arguments:
+	/// - `parent` the ID of the parent window.
+	/// - `rect` represents the position and dimensions of the window relative to its parent.
+	pub fn new(parent: u32, rect: Rectangle) -> Self {
+		Self {
+			root: false,
+			parent: parent,
+
+			depth: 24, // TODO
+			rect,
+			border_width: 0,
+
+			properties: HashMap::new(),
+
+			attributes: WindowAttributes::default(),
+		}
+	}
+
+	/// Returns the depth of the window.
+	pub fn set_depth(&mut self, depth: u8) {
+		self.depth = depth;
 	}
 
 	/// Sets the position and size of the window.
@@ -167,6 +191,11 @@ impl Window {
 		}
 
 		self.rect = rect;
+	}
+
+	/// Sets the width of the border.
+	pub fn set_border_width(&mut self, border_width: u16) {
+		self.border_width = border_width;
 	}
 
 	/// Returns the property with the given name. If the property doesn't exist, the function
@@ -180,6 +209,11 @@ impl Window {
 	pub fn delete_property(&mut self, name: &str) {
 		self.properties.remove(name);
 	}
+
+	/// Sets the window's attributes.
+	pub fn set_attributes(&mut self, attr: WindowAttributes) {
+		self.attributes = attr;
+	}
 }
 
 impl Drawable for Window {
@@ -192,20 +226,8 @@ impl Drawable for Window {
 		0
 	}
 
-	fn get_x(&self) -> i16 {
-		self.rect.x
-	}
-
-	fn get_y(&self) -> i16 {
-		self.rect.y
-	}
-
-	fn get_width(&self) -> u16 {
-		self.rect.width
-	}
-
-	fn get_height(&self) -> u16 {
-		self.rect.height
+	fn get_rectangle(&self) -> Rectangle {
+		self.rect.clone()
 	}
 
 	fn get_border_width(&self) -> u16 {

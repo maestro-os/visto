@@ -2,10 +2,12 @@
 
 use crate::ctx::Context;
 use crate::ctx::client::Client;
+use crate::ctx::window::Window;
 use crate::ctx::window::WindowAttributes;
 use crate::protocol::BackingStore;
 use crate::protocol::BitGravity;
 use crate::protocol::Class;
+use crate::protocol::Rectangle;
 use crate::protocol::WinGravity;
 use crate::protocol::error::Error;
 use crate::protocol::request::HandleError;
@@ -92,11 +94,25 @@ impl Request for CreateWindow {
 		client: &mut Client,
 		seq_nbr: u16,
 	) -> Result<(), HandleError> {
+		let rect = Rectangle {
+			x: self.x,
+			y: self.y,
+
+			width: self.width,
+			height: self.height,
+		};
+		let mut window = Window::new(self.parent, rect);
+
+		window.set_depth(self.depth);
+		window.set_border_width(self.border_width);
+
+		// TODO Interpret copy_from_parent
 		let mut attr = WindowAttributes::default();
 		set_attrs(&mut attr, &self.attrs);
 
-		// TODO
-		todo!();
+		window.set_attributes(attr);
+
+		Ok(())
 	}
 }
 

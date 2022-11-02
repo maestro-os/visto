@@ -8,6 +8,7 @@ pub mod window;
 use client::Client;
 use crate::drm;
 use crate::net::poll::PollHandler;
+use crate::protocol::Rectangle;
 use crate::protocol::request::RequestReadFn;
 use screen::Screen;
 use std::cell::UnsafeCell;
@@ -25,15 +26,8 @@ pub trait Drawable {
 	/// Returns the root of the drawable.
 	fn get_root(&self) -> u32;
 
-	/// Returns the X position.
-	fn get_x(&self) -> i16;
-	/// Returns the Y position.
-	fn get_y(&self) -> i16;
-
-	/// Returns the width.
-	fn get_width(&self) -> u16;
-	/// Returns the height.
-	fn get_height(&self) -> u16;
+	/// Returns the rectangle representing the position and dimensions of the drawable.
+	fn get_rectangle(&self) -> Rectangle;
 
 	/// Returns the width of the border.
 	fn get_border_width(&self) -> u16;
@@ -172,7 +166,7 @@ impl Context {
 		for dev in drm::DRICard::scan() {
 			// TODO Remove `take`
 			for conn in drm::DRIConnector::scan(&dev).into_iter().take(1) {
-				let root = Window::new_root();
+				let root = Window::new_root(1920, 1080); // TODO Pass dimensions of the screen
 				let root_id = 1; // TODO
 				self.windows.insert(root_id, root);
 
