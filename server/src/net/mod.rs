@@ -1,9 +1,7 @@
 //! This module implements socket communications. Both Unix sockets and network sockets are
 //! supported.
 
-pub mod poll;
-
-use poll::PollHandler;
+use crate::poll::PollHandler;
 use std::io::Read;
 use std::io::Write;
 use std::io;

@@ -9,6 +9,7 @@ pub mod extension;
 pub mod id_allocator;
 pub mod input_dev;
 pub mod net;
+pub mod poll;
 pub mod protocol;
 pub mod util;
 

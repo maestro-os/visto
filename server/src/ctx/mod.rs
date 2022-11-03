@@ -7,7 +7,7 @@ pub mod window;
 
 use client::Client;
 use crate::drm;
-use crate::net::poll::PollHandler;
+use crate::poll::PollHandler;
 use crate::protocol::Rectangle;
 use crate::protocol::request::RequestReadFn;
 use screen::Screen;
