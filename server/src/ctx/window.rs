@@ -10,6 +10,7 @@ use std::collections::HashMap;
 use super::Drawable;
 
 /// A property associated to a window.
+#[derive(Debug)]
 pub struct Property {
 	/// The atom of the name of the data's type.
 	property_type: u32,
@@ -38,6 +39,7 @@ impl Property {
 }
 
 /// Structure storing a window's attributes.
+#[derive(Debug)]
 pub struct WindowAttributes {
 	/// TODO doc
 	pub background_pixmap: u32,
@@ -112,6 +114,7 @@ impl Default for WindowAttributes {
 }
 
 /// A window to be rendered on screen.
+#[derive(Debug)]
 pub struct Window {
 	/// Tells whether the window is a root window.
 	root: bool,

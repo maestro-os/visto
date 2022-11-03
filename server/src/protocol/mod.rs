@@ -32,7 +32,7 @@ pub struct XRequest {
 }
 
 /// TODO doc
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 #[repr(u16)]
 pub enum Class {
 	CopyFromParent = 0,
@@ -41,7 +41,7 @@ pub enum Class {
 }
 
 /// TODO doc
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 #[repr(u8)]
 pub enum BackingStore {
 	NotUseful = 0,
@@ -64,7 +64,7 @@ impl TryFrom<u8> for BackingStore {
 }
 
 /// TODO doc
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 #[repr(u8)]
 pub enum BitGravity {
 	Forget = 0,
@@ -103,7 +103,7 @@ impl TryFrom<u8> for BitGravity {
 }
 
 /// TODO doc
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 #[repr(u8)]
 pub enum WinGravity {
 	Unmap = 0,
@@ -142,7 +142,7 @@ impl TryFrom<u8> for WinGravity {
 }
 
 /// TODO doc
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 #[repr(u8)]
 pub enum MapState {
 	Unmapped = 0,
@@ -151,7 +151,7 @@ pub enum MapState {
 }
 
 /// Enumeration of events.
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 #[repr(u32)]
 pub enum Event {
 	KeyPress = 0x00000001,
@@ -243,7 +243,7 @@ pub struct Point {
 }
 
 /// A rectangle.
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Rectangle {
 	/// X position.
 	pub x: i16,
