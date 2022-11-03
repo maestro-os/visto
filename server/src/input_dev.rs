@@ -11,6 +11,7 @@ use std::fs::File;
 use std::io::Read;
 use std::io;
 use std::mem::size_of;
+use std::os::unix::prelude::AsRawFd;
 use std::path::PathBuf;
 
 // TODO Allow buffering of several events at once
@@ -70,5 +71,11 @@ impl InputDevice {
 		} else {
 			Ok(None)
 		}
+	}
+}
+
+impl AsRawFd for InputDevice {
+	fn as_raw_fd(&self) -> i32 {
+		self.file.as_raw_fd()
 	}
 }
