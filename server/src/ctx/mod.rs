@@ -166,14 +166,16 @@ impl Context {
 		self.screens.clear();
 
 		for dev in DRICard::scan() {
-			// TODO Remove `take`
-			for conn in DRIConnector::scan(&dev).into_iter().take(1) {
-				let root = Window::new_root(1920, 1080); // TODO Pass dimensions of the screen
+			for conn in DRIConnector::scan(&dev) {
+				// TODO Mode setting
+
+				// TODO Pass dimensions of the screen
+				/*let root = Window::new_root(1920, 1080);
 				let root_id = 1; // TODO
 				self.windows.insert(root_id, root);
 
 				let screen = Screen::new(conn, root_id);
-				self.screens.push(screen);
+				self.screens.push(screen);*/
 			}
 		}
 	}
