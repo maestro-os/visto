@@ -2,6 +2,7 @@
 
 pub mod client;
 pub mod gc;
+pub mod pointer;
 pub mod screen;
 pub mod window;
 
