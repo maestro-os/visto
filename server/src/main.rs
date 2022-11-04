@@ -11,6 +11,7 @@ pub mod net;
 pub mod output;
 pub mod poll;
 pub mod protocol;
+pub mod screens_layout;
 pub mod util;
 
 use ctx::Context;
@@ -104,7 +105,7 @@ fn main() {
 
 	// Creating context
 	let mut ctx = Context::new();
-	ctx.scan_screens();
+	ctx.scan_screens(None); // TODO read layout from config if present
 
 	// Creating listener
 	let unix_path = format!("/tmp/.X11-unix/X{}", args.display);

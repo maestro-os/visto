@@ -12,6 +12,7 @@ use crate::output::connector::DRIConnector;
 use crate::poll::PollHandler;
 use crate::protocol::Rectangle;
 use crate::protocol::request::RequestReadFn;
+use crate::screens_layout::ScreensLayout;
 use screen::Screen;
 use std::cell::UnsafeCell;
 use std::collections::HashMap;
@@ -161,12 +162,35 @@ impl Context {
 		}
 	}
 
-	/// Scans for screens on DRM.
-	pub fn scan_screens(&mut self) {
+	/// Scans for output screens to be used.
+	///
+	/// `screens_layout` is the layout of screens to be used.
+	/// If None, the function determines by itself an appropriate layout.
+	pub fn scan_screens(&mut self, screens_layout: Option<ScreensLayout>) {
 		self.screens.clear();
 
 		for dev in DRICard::scan() {
 			for conn in DRIConnector::scan(&dev) {
+				// Selecting the screen's mode
+				let _mode = match screens_layout {
+					Some(_layout) => {
+						// TODO
+						todo!();
+					},
+
+					None => {
+						let mode = conn.modes.iter()
+							.max_by(|m0,m1| {
+								let p0 = m0.hdisplay * m0.vdisplay;
+								let p1 = m1.hdisplay * m1.vdisplay;
+
+								p0.cmp(&p1)
+							});
+
+						// Won't fail because valid screens have at least one mode available
+						mode.unwrap()
+					},
+				};
 				// TODO Mode setting
 
 				// TODO Pass dimensions of the screen
