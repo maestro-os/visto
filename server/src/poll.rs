@@ -45,6 +45,6 @@ impl PollHandler {
 		}
 
 		// Remove invalid (closed?) file descriptors from the list
-		self.fds.retain(|fd| fd.revents | libc::POLLNVAL == 0);
+		// FIXME self.fds.retain(|fd| fd.revents | libc::POLLNVAL == 0);
 	}
 }

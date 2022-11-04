@@ -1,5 +1,6 @@
 //! This module implements each requests of the X protocol.
 
+pub mod change_property;
 pub mod change_window_attributes;
 pub mod create_gc;
 pub mod create_window;
@@ -297,6 +298,7 @@ pub fn build_request(
 		GET_GEOMETRY => get_geometry::read(buff, optional),
 		INTERN_ATOM => intern_atom::read(buff, optional),
 		GET_ATOM_NAME => get_atom_name::read(buff, optional),
+		CHANGE_PROPERTY => change_property::read(buff, optional),
 		GET_PROPERTY => get_property::read(buff, optional),
 		GET_SELECTION_OWNER => get_selection_owner::read(buff, optional),
 		GRAB_SERVER => grab_server::read(buff, optional),
@@ -306,7 +308,7 @@ pub fn build_request(
 		NO_OPERATION => no_operation::read(buff, optional),
 
 		// TODO _ => Err(Error::Request),
-		_ => Ok(None),
+		_ => todo!(),
 	}
 }
 

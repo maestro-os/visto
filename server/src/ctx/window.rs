@@ -12,6 +12,7 @@ use super::Drawable;
 /// A property associated to a window.
 #[derive(Debug)]
 pub struct Property {
+	// TODO Change to string?
 	/// The atom of the name of the data's type.
 	property_type: u32,
 	/// The data's format.
@@ -22,6 +23,21 @@ pub struct Property {
 }
 
 impl Property {
+	/// Creates a property.
+	///
+	/// Arguments:
+	/// - `property_type` is the atom representing the type of the property.
+	/// - `format` is the format of the property.
+	/// - `data` is the data of the property.
+	pub fn new(property_type: u32, format: u8, data: Vec<u8>) -> Self {
+		Self {
+			property_type,
+			format,
+
+			data,
+		}
+	}
+
 	/// Returns the atom of the type of the property.
 	pub fn get_type(&self) -> u32 {
 		self.property_type
@@ -35,6 +51,20 @@ impl Property {
 	/// Returns a slice to the property's data.
 	pub fn get_data(&self) -> &[u8] {
 		self.data.as_slice()
+	}
+
+	/// Prepends the given data to the current.
+	pub fn prepend_data(&mut self, data: &[u8]) {
+		let mut new = Vec::with_capacity(self.data.len() + data.len());
+		new.extend_from_slice(data);
+		new.append(&mut self.data);
+
+		self.data = new;
+	}
+
+	/// Appends the given data to the current.
+	pub fn append_data(&mut self, data: &[u8]) {
+		self.data.extend_from_slice(data);
 	}
 }
 
@@ -201,10 +231,21 @@ impl Window {
 		self.border_width = border_width;
 	}
 
-	/// Returns the property with the given name. If the property doesn't exist, the function
-	/// returns None.
+	/// Returns an immutable reference to the property with the given name.
+	/// If the property doesn't exist, the function returns None.
 	pub fn get_property(&self, name: &str) -> Option<&Property> {
 		self.properties.get(name)
+	}
+
+	/// Returns a mutable reference to the property with the given name.
+	/// If the property doesn't exist, the function returns None.
+	pub fn get_property_mut(&mut self, name: &str) -> Option<&mut Property> {
+		self.properties.get_mut(name)
+	}
+
+	/// Creates a property with the given name.
+	pub fn create_property(&mut self, name: String, prop: Property) {
+		self.properties.insert(name, prop);
 	}
 
 	/// Deletes the property with the given name. If the property doesn't exist, the function does
