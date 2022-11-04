@@ -6,7 +6,8 @@ pub mod screen;
 pub mod window;
 
 use client::Client;
-use crate::drm;
+use crate::output::card::DRICard;
+use crate::output::connector::DRIConnector;
 use crate::poll::PollHandler;
 use crate::protocol::Rectangle;
 use crate::protocol::request::RequestReadFn;
@@ -163,9 +164,9 @@ impl Context {
 	pub fn scan_screens(&mut self) {
 		self.screens.clear();
 
-		for dev in drm::DRICard::scan() {
+		for dev in DRICard::scan() {
 			// TODO Remove `take`
-			for conn in drm::DRIConnector::scan(&dev).into_iter().take(1) {
+			for conn in DRIConnector::scan(&dev).into_iter().take(1) {
 				let root = Window::new_root(1920, 1080); // TODO Pass dimensions of the screen
 				let root_id = 1; // TODO
 				self.windows.insert(root_id, root);

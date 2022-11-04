@@ -1,6 +1,7 @@
 //! A "screen" is a monitor attached to the server on which rendering is done (also called "sink").
 
-use crate::drm;
+use crate::output::connector::DRIConnector;
+use crate::output::connector::DRMModeModeinfo;
 use crate::protocol;
 use std::mem::size_of;
 use std::ptr;
@@ -8,10 +9,10 @@ use std::ptr;
 /// Structure representing a screen.
 pub struct Screen {
 	/// The connector, the interface to the screen.
-	dri_connector: drm::DRIConnector,
+	dri_connector: DRIConnector,
 
 	/// The screen's current mode.
-	curr_mode: Option<drm::DRMModeModeinfo>,
+	curr_mode: Option<DRMModeModeinfo>,
 
 	/// The ID of the root window of the screen.
 	root_win_id: u32,
@@ -23,7 +24,7 @@ impl Screen {
 	/// Arguments:
 	/// - `conn` is the connector associated with the screen.
 	/// - `root_win_id` is the ID of the root window of the screen.
-	pub fn new(conn: drm::DRIConnector, root_win_id: u32) -> Self {
+	pub fn new(conn: DRIConnector, root_win_id: u32) -> Self {
 		Self {
 			dri_connector: conn,
 
@@ -39,13 +40,13 @@ impl Screen {
 	}
 
 	/// Returns the list of available modes for the screen.
-	pub fn get_available_modes(&self) -> &[drm::DRMModeModeinfo] {
+	pub fn get_available_modes(&self) -> &[DRMModeModeinfo] {
 		&self.dri_connector.modes
 	}
 
 	/// Returns the current mode of the screen.
 	/// If the current mode is unknown, the function returns None.
-	pub fn get_mode(&self) -> Option<&drm::DRMModeModeinfo> {
+	pub fn get_mode(&self) -> Option<&DRMModeModeinfo> {
 		self.curr_mode.as_ref()
 	}
 

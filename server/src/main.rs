@@ -4,11 +4,11 @@
 #![feature(step_trait)]
 
 pub mod ctx;
-pub mod drm;
 pub mod extension;
 pub mod id_allocator;
 pub mod input;
 pub mod net;
+pub mod output;
 pub mod poll;
 pub mod protocol;
 pub mod util;
