@@ -18,7 +18,7 @@ struct GetAtomNameReply {
 	_padding0: u8,
 	/// Sequence number.
 	seq_nbr: u16,
-	/// The length of the reply.
+	/// The length of the reply in units of 4 bytes.
 	reply_length: u32,
 
 	/// The length of the name.
