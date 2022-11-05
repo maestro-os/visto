@@ -1,4 +1,7 @@
 //! A "screen" is a monitor attached to the server on which rendering is done (also called "sink").
+//!
+//! Since a desktop can be split on several screens, each screens has its own virtual position to
+//! determine on which screen the pointer must appears when hitting a corner.
 
 use crate::output::connector::DRIConnector;
 use crate::output::connector::DRMModeModeinfo;
@@ -9,10 +12,16 @@ use std::ptr;
 /// Structure representing a screen.
 pub struct Screen {
 	/// The connector, the interface to the screen.
-	dri_connector: DRIConnector,
+	conn: DRIConnector,
 
+	/// The absolute virtual X position of the screen.
+	x: u32,
+	/// The absolute virtual Y position of the screen.
+	y: u32,
+
+	// TODO Do not store since it can be changed by an external program?
 	/// The screen's current mode.
-	curr_mode: Option<DRMModeModeinfo>,
+	mode: DRMModeModeinfo,
 
 	/// The ID of the root window of the screen.
 	root_win_id: u32,
@@ -23,49 +32,68 @@ impl Screen {
 	///
 	/// Arguments:
 	/// - `conn` is the connector associated with the screen.
+	/// - `x` is the absolute virtual X position of the screen.
+	/// - `y` is the absolute virtual Y position of the screen.
+	/// - `mode` is the current mode of the screen.
 	/// - `root_win_id` is the ID of the root window of the screen.
-	pub fn new(conn: DRIConnector, root_win_id: u32) -> Self {
+	pub fn new(
+		conn: DRIConnector,
+		x: u32,
+		y: u32,
+		mode: DRMModeModeinfo,
+		root_win_id: u32,
+	) -> Self {
 		Self {
-			dri_connector: conn,
+			conn,
 
-			curr_mode: None,
+			x,
+			y,
+
+			mode,
 
 			root_win_id,
 		}
 	}
 
 	/// Returns the size of the screen in millimeters.
-	pub fn get_screen_size(&self) -> (u32, u32) {
-		(self.dri_connector.mm_width, self.dri_connector.mm_height)
+	pub fn get_screen_size_mm(&self) -> (u32, u32) {
+		(self.conn.mm_width, self.conn.mm_height)
 	}
 
 	/// Returns the list of available modes for the screen.
 	pub fn get_available_modes(&self) -> &[DRMModeModeinfo] {
-		&self.dri_connector.modes
+		&self.conn.modes
 	}
 
 	/// Returns the current mode of the screen.
-	/// If the current mode is unknown, the function returns None.
-	pub fn get_mode(&self) -> Option<&DRMModeModeinfo> {
-		self.curr_mode.as_ref()
+	pub fn get_current_mode(&self) -> &DRMModeModeinfo {
+		&self.mode
 	}
 
-	/// Performs modesetting for the screen with the given mode.
-	pub fn set_mode(&mut self) {
-		// TODO
-		todo!();
+	/// Returns the size of the screen in pixels.
+	///
+	/// If no mode is selected, the function returns None.
+	pub fn get_screen_size(&self) -> (u16, u16) {
+		(self.mode.hdisplay, self.mode.vdisplay)
+	}
+
+	/// Tells whether two screens are adjacents.
+	///
+	/// This function is commutative.
+	pub fn adj(&self, other: &Self) -> bool {
+		// TODO Check if can be simplified
+		let x_adj = (self.x <= other.x) && (self.x + self.mode.hdisplay as u32 + 1 >= other.x)
+			|| (other.x <= self.x) && (other.x + other.mode.hdisplay as u32 + 1 >= self.x);
+		let y_adj = (self.y <= other.y) && (self.y + self.mode.vdisplay as u32 + 1 >= other.y)
+			|| (other.y <= self.y) && (other.y + other.mode.vdisplay as u32 + 1 >= self.y);
+
+		x_adj && y_adj
 	}
 
 	// TODO create/get framebuffer
 
 	/// Returns the protocol representation of the screen.
 	pub fn to_protocol_screen(&self) -> Vec<u8> {
-		// Getting pixels width/height
-		let (pixels_width, pixels_height) = match &self.curr_mode {
-			Some(mode) => (mode.hdisplay, mode.vdisplay),
-			None => (0, 0),
-		};
-
 		// TODO Fill according to screen informations
 		let visual = protocol::Visual {
 			visual_id: 0, // TODO
@@ -95,10 +123,10 @@ impl Screen {
 			black_pixel: 0x000000,
 			current_input_masks: 0, // TODO
 
-			pixels_width,
-			pixels_height,
-			millimeters_width: self.dri_connector.mm_width as _,
-			millimeters_height: self.dri_connector.mm_height as _,
+			pixels_width: self.mode.hdisplay,
+			pixels_height: self.mode.vdisplay,
+			millimeters_width: self.conn.mm_width as _,
+			millimeters_height: self.conn.mm_height as _,
 
 			min_installed_maps: 1, // TODO
 			max_installed_maps: 1, // TODO

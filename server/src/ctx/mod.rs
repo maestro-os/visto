@@ -172,7 +172,7 @@ impl Context {
 		for dev in DRICard::scan() {
 			for conn in DRIConnector::scan(&dev) {
 				// Selecting the screen's mode
-				let _mode = match screens_layout {
+				let mode = match screens_layout {
 					Some(_layout) => {
 						// TODO
 						todo!();
@@ -188,18 +188,21 @@ impl Context {
 							});
 
 						// Won't fail because valid screens have at least one mode available
-						mode.unwrap()
+						mode.unwrap().clone()
 					},
 				};
-				// TODO Mode setting
 
-				// TODO Pass dimensions of the screen
-				/*let root = Window::new_root(1920, 1080);
-				let root_id = 1; // TODO
+				// Modesetting
+				conn.set_mode(&mode);
+				// TODO Set gamma
+
+				let root = Window::new_root(mode.hdisplay, mode.vdisplay);
+				let root_id = 1; // TODO Allocate?
 				self.windows.insert(root_id, root);
 
-				let screen = Screen::new(conn, root_id);
-				self.screens.push(screen);*/
+				// TODO Screen coords
+				let screen = Screen::new(conn, 0, 0, mode, root_id);
+				self.screens.push(screen);
 			}
 		}
 	}

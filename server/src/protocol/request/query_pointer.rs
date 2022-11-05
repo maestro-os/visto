@@ -4,7 +4,6 @@ use crate::ctx::Context;
 use crate::ctx::client::Client;
 use crate::protocol::error::Error;
 use crate::protocol::request::HandleError;
-use crate::protocol;
 use crate::util;
 use std::mem::size_of;
 use super::Request;

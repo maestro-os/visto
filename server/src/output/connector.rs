@@ -173,4 +173,13 @@ impl DRIConnector {
 
 		connectors
 	}
+
+	// TODO Set CRTC and encoder
+
+	/// Sets the given mode for the connector.
+	pub fn set_mode(&self, _mode: &DRMModeModeinfo) {
+		// TODO
+	}
+
+	// TODO Framebuffer functions
 }
