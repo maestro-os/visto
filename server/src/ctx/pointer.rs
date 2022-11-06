@@ -1,6 +1,7 @@
 //! TODO doc
 
 /// A pointer displayed on a screen.
+#[derive(Default)]
 pub struct Pointer {
 	/// The ID of the screen the pointer is located on.
 	screen: u32,

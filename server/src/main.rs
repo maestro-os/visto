@@ -128,8 +128,6 @@ fn main() {
 
 	let mut client_id_allocator = IDAllocator::from_range(0..8192);
 	loop {
-		ctx.render(); // TODO rm
-
 		// Waiting until something has to be done
 		listener.get_poll_handler().poll();
 

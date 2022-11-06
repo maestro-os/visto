@@ -13,6 +13,7 @@ use crate::poll::PollHandler;
 use crate::protocol::Rectangle;
 use crate::protocol::request::RequestReadFn;
 use crate::screens_layout::ScreensLayout;
+use pointer::Pointer;
 use screen::Screen;
 use std::cell::UnsafeCell;
 use std::collections::HashMap;
@@ -74,6 +75,9 @@ pub struct Context<'a> {
 	/// Requests handlers registered by extensions.
 	/// The key is the major opcode and the value is the handler.
 	custom_requests: HashMap<u8, Box<RequestReadFn>>,
+
+	/// The pointer, controller by user inputs.
+	pointer: Pointer,
 }
 
 impl<'a> Context<'a> {
@@ -159,6 +163,8 @@ impl<'a> Context<'a> {
 			grabbing_client: None,
 
 			custom_requests: HashMap::new(),
+
+			pointer: Pointer::default(),
 		}
 	}
 

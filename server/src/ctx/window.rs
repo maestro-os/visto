@@ -313,7 +313,6 @@ impl Window {
 		let y_end = min((y + height) as usize, screen_height as usize);
 
 		let ptr = fb.get_buffer_ptr().unwrap().as_ptr();
-
 		for y in y_begin..y_end {
 			for x in x_begin..x_end {
 				let i = y * width as usize + x;
