@@ -1,8 +1,93 @@
 //! A connector represents a screen.
 
 use crate::output::card::DRICard;
+use std::ffi::c_int;
 use std::os::unix::io::AsRawFd;
 use super::DRM_IOCTL_MODE_GETCONNECTOR;
+use super::DRM_IOCTL_MODE_GETCRTC;
+use super::DRM_IOCTL_MODE_GETENCODER;
+
+/// TODO doc
+#[derive(Clone, Debug, Default)]
+#[repr(C)]
+pub struct DRMModeCreateDumb {
+	/// TODO doc
+	height: u32,
+	/// TODO doc
+	width: u32,
+	/// TODO doc
+	bpp: u32,
+	/// TODO doc
+	flags: u32,
+	/// TODO doc
+	handle: u32,
+	/// TODO doc
+	pitch: u32,
+	/// TODO doc
+	size: u64,
+}
+
+/// TODO doc
+#[derive(Clone, Debug, Default)]
+#[repr(C)]
+pub struct DRMModeMapDumb {
+	/// TODO doc
+	handle: u32,
+	/// TODO doc
+	pad: u32,
+	/// TODO doc
+	offset: u64,
+}
+
+/// TODO doc
+#[derive(Clone, Debug, Default)]
+#[repr(C)]
+pub struct DRMModeDestroyDumb {
+	/// TODO doc
+	handle: u32,
+}
+
+/// Structure to get a CRTC's informations from DRM.
+#[derive(Clone, Debug, Default)]
+#[repr(C)]
+pub struct DRMModeCRTC {
+	/// TODO doc
+	crtc_id: u32,
+	/// TODO doc
+	buffer_id: u32,
+
+	/// TODO doc
+	x: u32,
+	/// TODO doc
+	y: u32,
+	/// TODO doc
+	width: u32,
+	/// TODO doc
+	height: u32,
+	/// TODO doc
+	mode_valid: c_int,
+	/// TODO doc
+	mode: DRMModeModeinfo,
+
+	/// TODO doc
+	gamma_size: c_int,
+}
+
+/// Structure to get an encoder's informations from DRM.
+#[derive(Clone, Debug, Default)]
+#[repr(C)]
+pub struct DRMModeEncoder {
+	/// TODO doc
+	encoder_id: u32,
+	/// TODO doc
+	encoder_type: u32,
+	/// TODO doc
+	crtc_id: u32,
+	/// TODO doc
+	possible_crtcs: u32,
+	/// TODO doc
+	possible_clones: u32,
+}
 
 /// Structure to get a connector's mode informations from DRM.
 #[derive(Clone, Debug, Default)]
@@ -95,6 +180,9 @@ pub struct DRIConnector {
 	/// Height of the connected sink in millimeters.
 	pub mm_height: u32,
 
+	/// The ID of the connector's encoder.
+	encoder_id: u32,
+
 	/// List of encoders.
 	encoders: Vec<u32>,
 	/// List of modes.
@@ -133,6 +221,8 @@ impl DRIConnector {
 		let mut connector = DRIConnector {
 			mm_width: conn.mm_width,
 			mm_height: conn.mm_height,
+
+			encoder_id: conn.encoder_id,
 
 			encoders: vec![0; conn.count_encoders as usize],
 			modes: vec![DRMModeModeinfo::default(); conn.count_modes as usize],
@@ -174,11 +264,55 @@ impl DRIConnector {
 		connectors
 	}
 
-	// TODO Set CRTC and encoder
+	/// Returns the connector's CRTC.
+	///
+	/// `card` is the connector's card.
+	pub fn get_crtc(&self, card: &DRICard) -> Option<DRMModeCRTC> {
+		let fd = card.get_device().as_raw_fd();
+
+		// Get encoder
+		let mut encoder = DRMModeEncoder::default();
+		encoder.encoder_id = self.encoder_id;
+		let res = unsafe {
+			libc::ioctl(
+				fd,
+				DRM_IOCTL_MODE_GETENCODER,
+				&mut encoder as *mut _
+			)
+		};
+		if res < 0 {
+			return None;
+		}
+
+		// Get CRTC
+		let mut crtc = DRMModeCRTC::default();
+		crtc.crtc_id = encoder.crtc_id;
+		let res = unsafe {
+			libc::ioctl(
+				fd,
+				DRM_IOCTL_MODE_GETCRTC,
+				&mut crtc as *mut _
+			)
+		};
+		if res < 0 {
+			return None;
+		}
+		if crtc.mode_valid != 0 {
+			crtc.width = crtc.mode.hdisplay as _;
+			crtc.height = crtc.mode.vdisplay as _;
+		}
+
+		Some(crtc)
+	}
 
 	/// Sets the given mode for the connector.
-	pub fn set_mode(&self, _mode: &DRMModeModeinfo) {
+	///
+	/// `card` is the connector's card.
+	pub fn set_mode(&self, card: &DRICard, _mode: &DRMModeModeinfo) {
+		let _fd = card.get_device().as_raw_fd();
+
 		// TODO
+		todo!();
 	}
 
 	// TODO Framebuffer functions

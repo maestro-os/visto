@@ -55,9 +55,40 @@ const DRM_IOCTL_MODE_GETRESOURCES: u64 = iowr!(
 	0xa0,
 	card::DRMModeCardRes
 );
+/// DRM ioctl command: Get DRM encoder.
+const DRM_IOCTL_MODE_GETCRTC: u64 = iowr!(
+	DRM_IOCTL_BASE,
+	0xa1,
+	connector::DRMModeCRTC
+);
+/// DRM ioctl command: Get DRM encoder.
+const DRM_IOCTL_MODE_GETENCODER: u64 = iowr!(
+	DRM_IOCTL_BASE,
+	0xa6,
+	connector::DRMModeEncoder
+);
 /// DRM ioctl command: Get DRM connector.
 const DRM_IOCTL_MODE_GETCONNECTOR: u64 = iowr!(
 	DRM_IOCTL_BASE,
 	0xa7,
 	connector::DRMModeGetConnector
+);
+
+/// DRM ioctl command: Create a dumb buffer.
+const DRM_IOCTL_MODE_CREATE_DUMB: u64 = iowr!(
+	DRM_IOCTL_BASE,
+	0xb2,
+	connector::DRMModeCreateDumb
+);
+/// DRM ioctl command: Map a dumb buffer.
+const DRM_IOCTL_MODE_MAP_DUMB: u64 = iowr!(
+	DRM_IOCTL_BASE,
+	0xb3,
+	connector::DRMModeMapDumb
+);
+/// DRM ioctl command: Destroy a dumb buffer.
+const DRM_IOCTL_MODE_DESTROY_DUMB: u64 = iowr!(
+	DRM_IOCTL_BASE,
+	0xb4,
+	connector::DRMModeDestroyDumb
 );

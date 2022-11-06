@@ -193,7 +193,7 @@ impl Context {
 				};
 
 				// Modesetting
-				conn.set_mode(&mode);
+				conn.set_mode(&dev, &mode);
 				// TODO Set gamma
 
 				let root = Window::new_root(mode.hdisplay, mode.vdisplay);
