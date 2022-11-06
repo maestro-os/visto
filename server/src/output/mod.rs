@@ -4,6 +4,7 @@
 
 pub mod card;
 pub mod connector;
+pub mod framebuffer;
 
 // TODO
 // - Iterate on encoders available for each connectors
@@ -72,6 +73,18 @@ const DRM_IOCTL_MODE_GETCONNECTOR: u64 = iowr!(
 	DRM_IOCTL_BASE,
 	0xa7,
 	connector::DRMModeGetConnector
+);
+/// DRM ioctl command: Creates a framebuffer.
+const DRM_IOCTL_MODE_ADDFB: u64 = iowr!(
+	DRM_IOCTL_BASE,
+	0xae,
+	framebuffer::DRMModeFBCmd
+);
+/// DRM ioctl command: Removes a framebuffer.
+const DRM_IOCTL_MODE_RMFB: u64 = iowr!(
+	DRM_IOCTL_BASE,
+	0xaf,
+	u32
 );
 
 /// DRM ioctl command: Create a dumb buffer.

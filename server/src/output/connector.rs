@@ -314,6 +314,4 @@ impl DRIConnector {
 		// TODO
 		todo!();
 	}
-
-	// TODO Framebuffer functions
 }
