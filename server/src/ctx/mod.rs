@@ -54,9 +54,9 @@ impl Selection {
 }
 
 /// Structure representing a context.
-pub struct Context {
+pub struct Context<'a> {
 	/// The list of screens.
-	screens: Vec<Screen>,
+	screens: Vec<Screen<'a>>,
 	/// The list of windows.
 	windows: HashMap<u32, Window>,
 
@@ -76,7 +76,7 @@ pub struct Context {
 	custom_requests: HashMap<u8, Box<RequestReadFn>>,
 }
 
-impl Context {
+impl<'a> Context<'a> {
 	/// Creates a new instance.
 	pub fn new() -> Self {
 		Self {
@@ -162,14 +162,16 @@ impl Context {
 		}
 	}
 
-	/// Scans for output screens to be used.
+	/// Initializes output screens for the context.
 	///
-	/// `screens_layout` is the layout of screens to be used.
+	/// Arguments:
+	/// - `cards` is the list of card devices.
+	/// - `screens_layout` is the layout of screens to be used.
 	/// If None, the function determines by itself an appropriate layout.
-	pub fn scan_screens(&mut self, screens_layout: Option<ScreensLayout>) {
+	pub fn init_screens(&mut self, cards: &'a [DRICard], screens_layout: Option<ScreensLayout>) {
 		self.screens.clear();
 
-		for dev in DRICard::scan() {
+		for dev in cards {
 			for conn in DRIConnector::scan(&dev) {
 				// Selecting the screen's mode
 				let mode = match screens_layout {
@@ -196,27 +198,12 @@ impl Context {
 				// TODO conn.set_mode(&dev, &mode);
 				// TODO Set gamma
 
-				// TODO clean and move
-				let crtc = conn.get_crtc(&dev).unwrap();
-				let mut fb = crate::output::framebuffer::Framebuffer::new(&dev, mode.hdisplay as u32, mode.vdisplay as u32).unwrap();
-				fb.map().unwrap();
-				println!("-> {:?} {}", fb.get_buffer_ptr(), fb.get_buffer_len());
-				for i in 0..fb.get_buffer_len() {
-					unsafe {
-						let ptr = fb.get_buffer_ptr().unwrap().as_ptr();
-						*(ptr.add(i)) = 0xff0000;
-					}
-				}
-				loop {
-					conn.page_flip(&dev, crtc.crtc_id, &fb);
-				}
-
 				let root = Window::new_root(mode.hdisplay, mode.vdisplay);
 				let root_id = 1; // TODO Allocate?
 				self.windows.insert(root_id, root);
 
 				// TODO Screen coords
-				let screen = Screen::new(conn, 0, 0, mode, root_id);
+				let screen = Screen::new(&dev, conn, mode, 0, 0, root_id);
 				self.screens.push(screen);
 			}
 		}
@@ -228,7 +215,7 @@ impl Context {
 	}
 
 	/// Returns a mutable reference to the list of screens.
-	pub fn get_screens_mut(&mut self) -> &mut [Screen] {
+	pub fn get_screens_mut(&mut self) -> &'a mut [Screen] {
 		&mut self.screens
 	}
 

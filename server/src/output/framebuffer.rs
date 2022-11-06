@@ -163,7 +163,6 @@ impl<'a> Framebuffer<'a> {
 				cmd.offset as _
 			)
 		};
-		println!("=> {}", self.buff_len);
 		if buff_ptr.is_null() || buff_ptr == libc::MAP_FAILED {
 			return Err(());
 		}

@@ -18,6 +18,7 @@ use ctx::Context;
 use ctx::client::Client;
 use id_allocator::IDAllocator;
 use net::Listener;
+use output::card::DRICard;
 use std::env;
 use std::path::Path;
 use std::process::exit;
@@ -103,9 +104,12 @@ fn main() {
 			exit(1);
 		});
 
+	// Scanning for DRI cards
+	let dri_cards = DRICard::scan();
+
 	// Creating context
 	let mut ctx = Context::new();
-	ctx.scan_screens(None); // TODO read layout from config if present
+	ctx.init_screens(&dri_cards, None); // TODO read layout from config if present
 
 	// Creating listener
 	let unix_path = format!("/tmp/.X11-unix/X{}", args.display);

@@ -3,53 +3,82 @@
 //! Since a desktop can be split on several screens, each screens has its own virtual position to
 //! determine on which screen the pointer must appears when hitting a corner.
 
+use crate::output::card::DRICard;
 use crate::output::connector::DRIConnector;
 use crate::output::connector::DRMModeModeinfo;
+use crate::output::framebuffer::Framebuffer;
 use crate::protocol;
 use std::mem::size_of;
 use std::ptr;
 
 /// Structure representing a screen.
-pub struct Screen {
+pub struct Screen<'a> {
+	/// A reference to the card device.
+	dev: &'a DRICard,
+
 	/// The connector, the interface to the screen.
 	conn: DRIConnector,
+	// TODO Do not store since it can be changed by an external program?
+	/// The screen's current mode.
+	mode: DRMModeModeinfo,
+	/// The ID of the screen's CRTC.
+	crtc: u32,
+
+	/// The framebuffers.
+	fbs: [Framebuffer<'a>; 2],
+	/// The index of the current framebuffer.
+	curr_fb: usize,
 
 	/// The absolute virtual X position of the screen.
 	x: u32,
 	/// The absolute virtual Y position of the screen.
 	y: u32,
 
-	// TODO Do not store since it can be changed by an external program?
-	/// The screen's current mode.
-	mode: DRMModeModeinfo,
-
 	/// The ID of the root window of the screen.
 	root_win_id: u32,
 }
 
-impl Screen {
+impl<'a> Screen<'a> {
 	/// Creates a new instance.
 	///
 	/// Arguments:
+	/// - `dev` is a reference to the connector's card device.
 	/// - `conn` is the connector associated with the screen.
 	/// - `x` is the absolute virtual X position of the screen.
 	/// - `y` is the absolute virtual Y position of the screen.
 	/// - `mode` is the current mode of the screen.
 	/// - `root_win_id` is the ID of the root window of the screen.
 	pub fn new(
+		dev: &'a DRICard,
 		conn: DRIConnector,
+		mode: DRMModeModeinfo,
 		x: u32,
 		y: u32,
-		mode: DRMModeModeinfo,
 		root_win_id: u32,
 	) -> Self {
+		// TODO Handle error
+		let crtc = conn.get_crtc(&dev).unwrap().crtc_id;
+
+		let mut fbs = [
+			Framebuffer::new(dev, mode.hdisplay as _, mode.vdisplay as _).unwrap(),
+			Framebuffer::new(dev, mode.hdisplay as _, mode.vdisplay as _).unwrap(),
+		];
+		// TODO Handle errors
+		fbs[0].map().unwrap();
+		fbs[1].map().unwrap();
+
 		Self {
+			dev,
+
 			conn,
+			mode,
+			crtc,
+
+			fbs,
+			curr_fb: 0,
 
 			x,
 			y,
-
-			mode,
 
 			root_win_id,
 		}
@@ -168,5 +197,18 @@ impl Screen {
 		}
 
 		data
+	}
+
+	/// Returns an immutable reference to the current framebuffer.
+	pub fn get_curr_fb(&self) -> &Framebuffer {
+		&self.fbs[self.curr_fb]
+	}
+
+	/// Swap frame buffers, thus rendering the next frame to the screen.
+	pub fn swap_buffers(&mut self) {
+		let fb = &self.fbs[self.curr_fb];
+
+		self.conn.page_flip(&self.dev, self.crtc, fb);
+		self.curr_fb = (self.curr_fb + 1) % self.fbs.len();
 	}
 }
