@@ -13,6 +13,7 @@ use crate::protocol::error::Error;
 use crate::protocol::request::HandleError;
 use crate::util;
 use std::mem::size_of;
+use std::num::NonZeroU32;
 use super::Request;
 
 /// Enumeration of window attribute values read from a request.
@@ -101,7 +102,7 @@ impl Request for CreateWindow {
 			width: self.width,
 			height: self.height,
 		};
-		let mut window = Window::new(self.parent, rect);
+		let mut window = Window::new(ctx, NonZeroU32::new(self.parent), rect);
 
 		window.set_depth(self.depth);
 		window.set_border_width(self.border_width);

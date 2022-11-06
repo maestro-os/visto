@@ -58,7 +58,7 @@ pub struct Context<'a> {
 	/// The list of screens.
 	screens: Vec<Screen<'a>>,
 	/// The list of windows.
-	windows: HashMap<u32, Window>,
+	windows: HashMap<NonZeroU32, Window>,
 
 	/// The list of atoms on the server. The key is the ID of the atom.
 	atoms: HashMap<u32, String>,
@@ -198,12 +198,18 @@ impl<'a> Context<'a> {
 				// TODO conn.set_mode(&dev, &mode);
 				// TODO Set gamma
 
-				let root = Window::new_root(mode.hdisplay, mode.vdisplay);
-				let root_id = 1; // TODO Allocate?
-				self.windows.insert(root_id, root);
+				let root_rect = Rectangle {
+					x: 0,
+					y: 0,
+
+					width: mode.hdisplay,
+					height: mode.vdisplay,
+				};
+				let root = Window::new(self, None, root_rect);
+
 
 				// TODO Screen coords
-				let screen = Screen::new(&dev, conn, mode, 0, 0, root_id);
+				let screen = Screen::new(&dev, conn, mode, 0, 0, root.get_id());
 				self.screens.push(screen);
 			}
 		}
@@ -220,19 +226,19 @@ impl<'a> Context<'a> {
 	}
 
 	/// Returns the drawable with the given ID.
-	pub fn get_drawable(&self, id: u32) -> Option<&dyn Drawable> {
+	pub fn get_drawable(&self, id: NonZeroU32) -> Option<&dyn Drawable> {
 		// TODO Handle pixmaps
 
 		self.get_window(id).map(|d| d as &dyn Drawable)
 	}
 
 	/// Returns an immutable reference to the window with the given ID.
-	pub fn get_window(&self, wid: u32) -> Option<&Window> {
+	pub fn get_window(&self, wid: NonZeroU32) -> Option<&Window> {
 		self.windows.get(&wid)
 	}
 
 	/// Returns a mutable reference to the window with the given ID.
-	pub fn get_window_mut(&mut self, wid: u32) -> Option<&mut Window> {
+	pub fn get_window_mut(&mut self, wid: NonZeroU32) -> Option<&mut Window> {
 		self.windows.get_mut(&wid)
 	}
 
@@ -341,5 +347,23 @@ impl<'a> Context<'a> {
 	/// Ungrabs the server.
 	pub fn ungrab(&mut self) {
 		self.grabbing_client = None;
+	}
+
+	/// Renders to the screen.
+	pub fn render(&mut self) {
+		// TODO Avoid rendering the whole screen: only render parts that changed
+
+		// Render recursively starting from root windows
+		for s in &self.screens {
+			let root_id = s.get_root_window_id();
+
+			if let Some(root) = self.get_window(root_id) {
+				root.render_full(self, s);
+			}
+		}
+
+		for s in &mut self.screens {
+			s.swap_buffers();
+		}
 	}
 }

@@ -6,6 +6,7 @@ use crate::protocol::error::Error;
 use crate::protocol::request::HandleError;
 use crate::util;
 use std::mem::size_of;
+use std::num::NonZeroU32;
 use super::Request;
 use super::create_window;
 
@@ -35,7 +36,9 @@ impl Request for ChangeWindowAttributes {
 		_client: &mut Client,
 		_seq_nbr: u16,
 	) -> Result<(), HandleError> {
-		let win = ctx.get_window_mut(self.window)
+		let wid = NonZeroU32::new(self.window)
+			.ok_or(HandleError::Client(Error::Window(self.window)))?;
+		let win = ctx.get_window_mut(wid)
 			.ok_or(HandleError::Client(Error::Window(self.window)))?;
 		create_window::set_attrs(&mut win.attributes, &self.changed_attrs);
 

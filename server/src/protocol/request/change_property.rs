@@ -7,6 +7,7 @@ use crate::protocol::error::Error;
 use crate::protocol::request::HandleError;
 use crate::util;
 use std::mem::size_of;
+use std::num::NonZeroU32;
 use super::Request;
 
 /// The action to perform on the property.
@@ -79,7 +80,9 @@ impl Request for ChangeProperty {
 		let prop_name = ctx.get_atom(self.property)
 			.ok_or(HandleError::Client(Error::Atom(self.property)))?
 			.to_owned();
-		let win = ctx.get_window_mut(self.window)
+		let wid = NonZeroU32::new(self.window)
+			.ok_or(HandleError::Client(Error::Window(self.window)))?;
+		let win = ctx.get_window_mut(wid)
 			.ok_or(HandleError::Client(Error::Window(self.window)))?;
 
 		if let Some(prop) = win.get_property_mut(&prop_name) {

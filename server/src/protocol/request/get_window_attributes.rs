@@ -12,6 +12,7 @@ use crate::protocol::request::HandleError;
 use crate::protocol;
 use crate::util;
 use std::mem::size_of;
+use std::num::NonZeroU32;
 use super::Request;
 
 /// The header of the request's reply.
@@ -77,7 +78,9 @@ impl Request for GetWindowAttributes {
 		client: &mut Client,
 		seq_nbr: u16,
 	) -> Result<(), HandleError> {
-		let win = ctx.get_window_mut(self.window)
+		let wid = NonZeroU32::new(self.window)
+			.ok_or(HandleError::Client(Error::Window(self.window)))?;
+		let win = ctx.get_window_mut(wid)
 			.ok_or(HandleError::Client(Error::Window(self.window)))?;
 
 		let hdr = GetWindowAttributesReply {

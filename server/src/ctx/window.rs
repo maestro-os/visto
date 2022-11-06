@@ -1,12 +1,18 @@
 //! TODO doc
 
+use crate::ctx::Context;
+use crate::ctx::Screen;
 use crate::protocol::BackingStore;
 use crate::protocol::BitGravity;
 use crate::protocol::Class;
 use crate::protocol::MapState;
 use crate::protocol::Rectangle;
 use crate::protocol::WinGravity;
+use std::cmp::max;
+use std::cmp::min;
 use std::collections::HashMap;
+use std::collections::HashSet;
+use std::num::NonZeroU32;
 use super::Drawable;
 
 /// A property associated to a window.
@@ -146,10 +152,13 @@ impl Default for WindowAttributes {
 /// A window to be rendered on screen.
 #[derive(Debug)]
 pub struct Window {
-	/// Tells whether the window is a root window.
-	root: bool,
+	/// The ID of the window.
+	id: NonZeroU32,
+
 	/// The ID of the parent window.
-	parent: u32,
+	parent: Option<NonZeroU32>,
+	/// The list of indexes of the childrens of the current window.
+	children: HashSet<NonZeroU32>,
 
 	/// The depth of the pixmap.
 	depth: u8,
@@ -169,38 +178,30 @@ impl Window {
 	/// Creates a new root window.
 	///
 	/// Arguments:
-	/// - `width` is the width of the window.
-	/// - `height` is the height of the window.
-	pub fn new_root(width: u16, height: u16) -> Self {
-		Self {
-			root: true,
-			parent: 0,
-
-			depth: 24, // TODO
-			rect: Rectangle {
-				x: 0,
-				y: 0,
-
-				width,
-				height,
-			},
-			border_width: 0,
-
-			properties: HashMap::new(),
-
-			attributes: WindowAttributes::default(),
-		}
-	}
-
-	/// Creates a window.
-	///
-	/// Arguments:
-	/// - `parent` the ID of the parent window.
+	/// - `ctx` is the context on which the window will be added.
+	/// - `parent` is the ID of the parent window. If None, the window is a root window.
 	/// - `rect` represents the position and dimensions of the window relative to its parent.
-	pub fn new(parent: u32, rect: Rectangle) -> Self {
-		Self {
-			root: false,
-			parent: parent,
+	///
+	/// The function allocates an ID for the window and adds it to the given context.
+	///
+	/// If the window is root, the X/Y position is zero-ed.
+	pub fn new<'c>(
+		ctx: &'c mut Context,
+		parent: Option<NonZeroU32>,
+		mut rect: Rectangle,
+	) -> &'c mut Self {
+		let id = NonZeroU32::new(1).unwrap(); // TODO Allocate? Take as param?
+
+		if parent.is_none() {
+			rect.x = 0;
+			rect.y = 0;
+		}
+
+		let win = Self {
+			id,
+
+			parent: None,
+			children: HashSet::new(),
 
 			depth: 24, // TODO
 			rect,
@@ -209,7 +210,38 @@ impl Window {
 			properties: HashMap::new(),
 
 			attributes: WindowAttributes::default(),
+		};
+
+		if let Some(parent_id) = win.parent {
+			// TODO Return error if None instead of unwrap
+			let parent = ctx.get_window_mut(parent_id).unwrap();
+			parent.children.insert(id);
 		}
+
+		// Insert window in context
+		ctx.windows.insert(id, win);
+
+		ctx.windows.get_mut(&id).unwrap()
+	}
+
+	/// Returns the ID of the window.
+	pub fn get_id(&self) -> NonZeroU32 {
+		self.id
+	}
+
+	/// Returns the ID of the window's parent.
+	pub fn get_parent(&self) -> Option<NonZeroU32> {
+		self.parent
+	}
+
+	/// Tells whether the window is root.
+	pub fn is_root(&self) -> bool {
+		self.parent.is_none()
+	}
+
+	/// The list indexes of the children of the window.
+	pub fn get_children(&self) -> &HashSet<NonZeroU32> {
+		&self.children
 	}
 
 	/// Returns the depth of the window.
@@ -219,7 +251,7 @@ impl Window {
 
 	/// Sets the position and size of the window.
 	pub fn set_rectangle(&mut self, rect: Rectangle) {
-		if self.root && (rect.x != 0 || rect.y != 0) {
+		if self.is_root() && (rect.x != 0 || rect.y != 0) {
 			return;
 		}
 
@@ -257,6 +289,64 @@ impl Window {
 	/// Sets the window's attributes.
 	pub fn set_attributes(&mut self, attr: WindowAttributes) {
 		self.attributes = attr;
+	}
+
+	/// Tells whether the window can render anything on screen.
+	pub fn is_output(&self) -> bool {
+		matches!(self.attributes.class, Class::InputOutput)
+	}
+
+	/// Renders the window's background with a single color.
+	pub fn render_pixel_background(&self, screen: &Screen) {
+		let fb = screen.get_curr_fb();
+
+		let (screen_width, screen_height) = screen.get_screen_size();
+
+		let x = self.rect.x as isize;
+		let y = self.rect.y as isize;
+		let width = self.rect.width as isize;
+		let height = self.rect.height as isize;
+
+		let x_begin = max(x, 0) as usize;
+		let y_begin = max(y, 0) as usize;
+		let x_end = min((x + width) as usize, screen_width as usize);
+		let y_end = min((y + height) as usize, screen_height as usize);
+
+		let ptr = fb.get_buffer_ptr().unwrap().as_ptr();
+
+		for y in y_begin..y_end {
+			for x in x_begin..x_end {
+				let i = y * width as usize + x;
+
+				// TODO use window's background color
+				unsafe {
+					*ptr.add(i) = 0xffffff;
+				}
+			}
+		}
+	}
+
+	/// Renders the window's background.
+	pub fn render_background(&self, screen: &Screen) {
+		// TODO If a pixmap is specified, render it to background
+		// However, pixel has priority over pixmap
+
+		self.render_pixel_background(screen);
+	}
+
+	/// Renders the full window, including children windows.
+	pub fn render_full(&self, ctx: &Context, screen: &Screen) {
+		if self.is_output() {
+			self.render_background(screen);
+
+			// TODO render content
+		}
+
+		for c in &self.children {
+			if let Some(child_win) = ctx.get_window(*c) {
+				child_win.render_full(ctx, screen);
+			}
+		}
 	}
 }
 

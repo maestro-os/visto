@@ -9,6 +9,7 @@ use crate::output::connector::DRMModeModeinfo;
 use crate::output::framebuffer::Framebuffer;
 use crate::protocol;
 use std::mem::size_of;
+use std::num::NonZeroU32;
 use std::ptr;
 
 /// Structure representing a screen.
@@ -35,7 +36,7 @@ pub struct Screen<'a> {
 	y: u32,
 
 	/// The ID of the root window of the screen.
-	root_win_id: u32,
+	root_win_id: NonZeroU32,
 }
 
 impl<'a> Screen<'a> {
@@ -54,7 +55,7 @@ impl<'a> Screen<'a> {
 		mode: DRMModeModeinfo,
 		x: u32,
 		y: u32,
-		root_win_id: u32,
+		root_win_id: NonZeroU32,
 	) -> Self {
 		// TODO Handle error
 		let crtc = conn.get_crtc(&dev).unwrap().crtc_id;
@@ -119,7 +120,10 @@ impl<'a> Screen<'a> {
 		x_adj && y_adj
 	}
 
-	// TODO create/get framebuffer
+	/// Returns the ID of the screen's root window.
+	pub fn get_root_window_id(&self) -> NonZeroU32 {
+		self.root_win_id
+	}
 
 	/// Returns the protocol representation of the screen.
 	pub fn to_protocol_screen(&self) -> Vec<u8> {
@@ -146,7 +150,7 @@ impl<'a> Screen<'a> {
 			_padding1: 0,
 		};
 		let screen = protocol::Screen {
-			root: self.root_win_id,
+			root: self.root_win_id.get(),
 			default_colormap: 0, // TODO
 			white_pixel: 0xffffff,
 			black_pixel: 0x000000,
@@ -199,12 +203,12 @@ impl<'a> Screen<'a> {
 		data
 	}
 
-	/// Returns an immutable reference to the current framebuffer.
+	/// Returns an immutable reference to the current framebuffer to use for rendering.
 	pub fn get_curr_fb(&self) -> &Framebuffer {
 		&self.fbs[self.curr_fb]
 	}
 
-	/// Swap frame buffers, thus rendering the next frame to the screen.
+	/// Swap frame buffers, thus displaying the next frame to the screen.
 	pub fn swap_buffers(&mut self) {
 		let fb = &self.fbs[self.curr_fb];
 

@@ -7,6 +7,7 @@ use crate::protocol::request::HandleError;
 use crate::protocol;
 use crate::util;
 use std::mem::size_of;
+use std::num::NonZeroU32;
 use super::Request;
 
 /// The header of the request's reply.
@@ -56,7 +57,9 @@ impl Request for GetGeometry {
 		client: &mut Client,
 		seq_nbr: u16,
 	) -> Result<(), HandleError> {
-		let drawable = ctx.get_drawable(self.drawable)
+		let drawable = NonZeroU32::new(self.drawable)
+			.ok_or(HandleError::Client(Error::Drawable(self.drawable)))?;
+		let drawable = ctx.get_drawable(drawable)
 			.ok_or(HandleError::Client(Error::Drawable(self.drawable)))?;
 		let rect = drawable.get_rectangle();
 
