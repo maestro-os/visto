@@ -1,6 +1,7 @@
 //! A card is a device handling screens.
 
 use std::fs::File;
+use std::fs::OpenOptions;
 use std::os::unix::io::AsRawFd;
 use super::DRM_IOCTL_MODE_GETRESOURCES;
 
@@ -67,7 +68,11 @@ impl DRICard {
 		let path = format!("/dev/dri/card{}", id);
 
 		loop {
-			let dev = match File::open(&path) {
+			let dev = OpenOptions::new()
+				.read(true)
+				.write(true)
+				.open(&path);
+			let dev = match dev {
 				Ok(dev) => dev,
 				Err(_) => return None,
 			};

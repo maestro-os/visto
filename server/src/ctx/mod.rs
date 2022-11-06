@@ -193,8 +193,23 @@ impl Context {
 				};
 
 				// Modesetting
-				conn.set_mode(&dev, &mode);
+				// TODO conn.set_mode(&dev, &mode);
 				// TODO Set gamma
+
+				// TODO clean and move
+				let crtc = conn.get_crtc(&dev).unwrap();
+				let mut fb = crate::output::framebuffer::Framebuffer::new(&dev, mode.hdisplay as u32, mode.vdisplay as u32).unwrap();
+				fb.map().unwrap();
+				println!("-> {:?} {}", fb.get_buffer_ptr(), fb.get_buffer_len());
+				for i in 0..fb.get_buffer_len() {
+					unsafe {
+						let ptr = fb.get_buffer_ptr().unwrap().as_ptr();
+						*(ptr.add(i)) = 0xff0000;
+					}
+				}
+				loop {
+					conn.page_flip(&dev, crtc.crtc_id, &fb);
+				}
 
 				let root = Window::new_root(mode.hdisplay, mode.vdisplay);
 				let root_id = 1; // TODO Allocate?

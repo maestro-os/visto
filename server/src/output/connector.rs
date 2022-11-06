@@ -1,50 +1,27 @@
 //! A connector represents a screen.
 
 use crate::output::card::DRICard;
-use std::ffi::c_int;
 use std::os::unix::io::AsRawFd;
 use super::DRM_IOCTL_MODE_GETCONNECTOR;
 use super::DRM_IOCTL_MODE_GETCRTC;
 use super::DRM_IOCTL_MODE_GETENCODER;
+use super::DRM_IOCTL_MODE_PAGE_FLIP;
+use super::framebuffer::Framebuffer;
 
 /// TODO doc
 #[derive(Clone, Debug, Default)]
 #[repr(C)]
-pub struct DRMModeCreateDumb {
-	/// TODO doc
-	height: u32,
-	/// TODO doc
-	width: u32,
-	/// TODO doc
-	bpp: u32,
-	/// TODO doc
+pub struct DRMModeCRTCPageFlip {
+	/// The CRTC ID.
+	crtc_id: u32,
+	/// The framebuffer ID.
+	fb_id: u32,
+	/// Flags.
 	flags: u32,
+	/// Reserved.
+	reserved: u32,
 	/// TODO doc
-	handle: u32,
-	/// TODO doc
-	pitch: u32,
-	/// TODO doc
-	size: u64,
-}
-
-/// TODO doc
-#[derive(Clone, Debug, Default)]
-#[repr(C)]
-pub struct DRMModeMapDumb {
-	/// TODO doc
-	handle: u32,
-	/// TODO doc
-	pad: u32,
-	/// TODO doc
-	offset: u64,
-}
-
-/// TODO doc
-#[derive(Clone, Debug, Default)]
-#[repr(C)]
-pub struct DRMModeDestroyDumb {
-	/// TODO doc
-	handle: u32,
+	user_data: u64,
 }
 
 /// Structure to get a CRTC's informations from DRM.
@@ -52,25 +29,26 @@ pub struct DRMModeDestroyDumb {
 #[repr(C)]
 pub struct DRMModeCRTC {
 	/// TODO doc
-	crtc_id: u32,
+	set_connectors_ptr: u64,
 	/// TODO doc
-	buffer_id: u32,
+	count_connectors: u32,
+
+	/// TODO doc
+	pub crtc_id: u32,
+	/// TODO doc
+	pub fb_id: u32,
 
 	/// TODO doc
 	x: u32,
 	/// TODO doc
 	y: u32,
-	/// TODO doc
-	width: u32,
-	/// TODO doc
-	height: u32,
-	/// TODO doc
-	mode_valid: c_int,
-	/// TODO doc
-	mode: DRMModeModeinfo,
 
 	/// TODO doc
-	gamma_size: c_int,
+	gamma_size: u32,
+	/// TODO doc
+	mode_valid: u32,
+	/// TODO doc
+	mode: DRMModeModeinfo,
 }
 
 /// Structure to get an encoder's informations from DRM.
@@ -297,10 +275,6 @@ impl DRIConnector {
 		if res < 0 {
 			return None;
 		}
-		if crtc.mode_valid != 0 {
-			crtc.width = crtc.mode.hdisplay as _;
-			crtc.height = crtc.mode.vdisplay as _;
-		}
 
 		Some(crtc)
 	}
@@ -313,5 +287,24 @@ impl DRIConnector {
 
 		// TODO
 		todo!();
+	}
+
+	/// TODO doc
+	pub fn page_flip(&self, card: &DRICard, crtc: u32, fb: &Framebuffer) {
+		let fd = card.get_device().as_raw_fd();
+
+		let mut flip = DRMModeCRTCPageFlip::default();
+		flip.fb_id = fb.get_id();
+		flip.crtc_id = crtc;
+		// TODO use constant (DRM_MODE_PAGE_FLIP_EVENT)
+		flip.flags = 0x1;
+
+		unsafe {
+			libc::ioctl(
+				fd,
+				DRM_IOCTL_MODE_PAGE_FLIP,
+				&mut flip as *const _
+			);
+		}
 	}
 }

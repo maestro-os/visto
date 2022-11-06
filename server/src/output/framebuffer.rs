@@ -2,6 +2,7 @@
 //! screen.
 
 use std::ffi::c_void;
+use std::mem::size_of;
 use std::os::unix::io::AsRawFd;
 use std::ptr::NonNull;
 use std::ptr::null_mut;
@@ -126,8 +127,13 @@ impl<'a> Framebuffer<'a> {
 			fb_id: cmd.fb_id,
 
 			buff: None,
-			buff_len: 0,
+			buff_len: dumb_buff.size as _,
 		})
+	}
+
+	/// Returns the ID of the framebuffer.
+	pub fn get_id(&self) -> u32 {
+		self.fb_id
 	}
 
 	/// Maps the framebuffer to memory.
@@ -157,7 +163,8 @@ impl<'a> Framebuffer<'a> {
 				cmd.offset as _
 			)
 		};
-		if buff_ptr == libc::MAP_FAILED {
+		println!("=> {}", self.buff_len);
+		if buff_ptr.is_null() || buff_ptr == libc::MAP_FAILED {
 			return Err(());
 		}
 		self.buff = NonNull::new(buff_ptr as *mut u32);
@@ -170,9 +177,9 @@ impl<'a> Framebuffer<'a> {
 		self.buff
 	}
 
-	/// Returns the length of the buffer in bytes.
+	/// Returns the length of the buffer in pixels.
 	pub fn get_buffer_len(&self) -> usize {
-		self.buff_len
+		self.buff_len / size_of::<u32>()
 	}
 }
 
@@ -186,6 +193,8 @@ impl<'a> Framebuffer<'a> {
 					self.buff_len
 				);
 			}
+
+			// TODO destroy dumb buffer
 		}
 
 		// Remove the framebuffer
