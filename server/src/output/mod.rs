@@ -6,13 +6,6 @@ pub mod card;
 pub mod connector;
 pub mod framebuffer;
 
-// TODO
-// - Iterate on encoders available for each connectors
-// - Associate a CRTC for each encoder
-// - List valid modes for each connectors
-// - Select a mode for each connector
-// - Create framebuffers
-
 /// ioctl macro: TODO doc
 macro_rules! ioc {
 	($a:expr, $b:expr, $c:expr, $d:expr) => {
