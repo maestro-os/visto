@@ -36,15 +36,24 @@ impl PollHandler {
 		self.fds.retain(|e| e.fd != obj.as_raw_fd());
 	}
 
-	/// Polls on every registered file descriptors.
+	// TODO Try to avoid allocation
+	/// Polls on every registered file descriptors, blocking until at least one file descriptor is
+	/// ready.
 	///
-	/// This function blocks until at least one file descriptor is ready.
-	pub fn poll(&mut self) {
+	/// The function returns the list of file descriptors ready for reading.
+	pub fn poll(&mut self) -> Vec<i32> {
 		unsafe {
 			libc::poll(self.fds.as_mut_ptr(), self.fds.len() as _, -1);
 		}
 
+
 		// Remove invalid (closed?) file descriptors from the list
 		// FIXME self.fds.retain(|fd| fd.revents | libc::POLLNVAL == 0);
+
+		// Collecting results
+		self.fds.iter()
+			.filter(|fd| fd.revents | libc::POLLIN != 0)
+			.map(|fd| fd.fd)
+			.collect()
 	}
 }

@@ -13,6 +13,7 @@ use device::EvDevInputEvent;
 use device::InputDevice;
 use std::fs;
 use std::io;
+use std::os::unix::io::AsRawFd;
 
 /// The path to the directory containing evdev device files.
 const EV_DEV_DIR: &str = "/dev/input";
@@ -72,9 +73,10 @@ pub enum Input {
 impl TryFrom<EvDevInputEvent> for Input {
 	type Error = ();
 
-	fn try_from(_ev: EvDevInputEvent) -> Result<Self, Self::Error> {
+	fn try_from(ev: EvDevInputEvent) -> Result<Self, Self::Error> {
 		// TODO
-		todo!();
+		println!("input: {} {} {}", ev.r#type, ev.code, ev.value);
+		Err(())
 	}
 }
 
@@ -125,19 +127,32 @@ impl InputManager {
 	}
 
 	/// Consumes and returns the next input. If no input is available, the function returns None.
-	pub fn next(&mut self) -> Option<Input> {
+	pub fn next(&mut self) -> io::Result<Option<Input>> {
 		// TODO Clean and Optimize
-		for d in &mut self.devs {
-			let mut poll_handler = PollHandler::new();
-			poll_handler.add_fd(d);
 
-			if let Some(i) = d.next().unwrap() {
+		let mut poll_handler = PollHandler::new();
+		for d in &mut self.devs {
+			println!("-> {}", d.as_raw_fd());
+			poll_handler.add_fd(d);
+		}
+		let fds = poll_handler.poll();
+		println!("=> {:?}", fds);
+
+		for d in &mut self.devs {
+			if !fds.iter()
+				.filter(|f| **f == d.as_raw_fd())
+				.next()
+				.is_some() {
+				continue;
+			}
+
+			if let Some(i) = d.next()? {
 				if let Ok(i) = i.try_into() {
-					return Some(i);
+					return Ok(Some(i));
 				}
 			}
 		}
 
-		None
+		Ok(None)
 	}
 }
