@@ -17,8 +17,10 @@ pub mod util;
 use ctx::Context;
 use ctx::client::Client;
 use id_allocator::IDAllocator;
+use input::InputManager;
 use net::Listener;
 use output::card::DRICard;
+use poll::PollHandler;
 use std::env;
 use std::path::Path;
 use std::process::exit;
@@ -107,6 +109,15 @@ fn main() {
 	// Scanning for DRI cards
 	let dri_cards = DRICard::scan();
 
+	let mut poll = PollHandler::new();
+
+	// Scanning for input devices
+	let mut input_manager = InputManager::new(&mut poll)
+		.unwrap_or_else(|e| {
+			eprintln!("error initializing input manager: {}", e);
+			exit(1);
+		});
+
 	// Creating context
 	let mut ctx = Context::new();
 	ctx.init_screens(&dri_cards, None); // TODO read layout from config if present
@@ -120,7 +131,7 @@ fn main() {
 			None
 		}
 	};
-	let mut listener = Listener::new(&unix_path, tcp_port)
+	let mut listener = Listener::new(&unix_path, tcp_port, &mut poll)
 		.unwrap_or_else(| e | {
 			eprintln!("Cannot listen for incoming connections: {}", e);
 			exit(1);
@@ -129,7 +140,7 @@ fn main() {
 	let mut client_id_allocator = IDAllocator::from_range(0..8192);
 	loop {
 		// Waiting until something has to be done
-		listener.get_poll_handler().poll();
+		poll.poll();
 
 		// TODO Add a maximum number of clients
 
@@ -139,7 +150,7 @@ fn main() {
 				let id = client_id_allocator.alloc().unwrap(); // TODO Handle error
 				let client = Client::new(id, stream);
 
-				ctx.add_client(client, listener.get_poll_handler());
+				ctx.add_client(client, &mut poll);
 			},
 
 			Ok(None) => {},
@@ -149,11 +160,15 @@ fn main() {
 			},
 		}
 
-		// TODO Listen for keyboard/mouse input
-
 		// Ticking clients
-		ctx.tick_clients(listener.get_poll_handler());
+		ctx.tick_clients(&mut poll);
 
-		ctx.render();
+		// Handle inputs
+		for i in input_manager.next() {
+			// TODO
+			println!("input: {:?}", i);
+		}
+
+		// TODO ctx.render();
 	}
 }

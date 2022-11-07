@@ -1,7 +1,143 @@
-//! TODO doc
+//! Input devices are the set of devices that allow users to interact with the system.
+//!
+//! An input device is either:
+//! - A keyboard
+//! - A mouse
+//! - A touchpad
+//! - A touchscreen
 
 pub mod device;
 
-// TODO Input device manager, using inotify to detect plug/unplug
-// The manager must **poll** on inotify to avoid blocking the server. Thus, using the same poll
-// handler as client sockets
+use crate::poll::PollHandler;
+use device::EvDevInputEvent;
+use device::InputDevice;
+use std::fs;
+use std::io;
+
+/// The path to the directory containing evdev device files.
+const EV_DEV_DIR: &str = "/dev/input";
+
+/// A keycode.
+pub type Keycode = u8;
+
+/// Enumeration of mouse button.
+#[derive(Debug)]
+pub enum MouseButton {
+	/// Left click.
+	Button1,
+	/// Right click.
+	Button2,
+	/// Middle click.
+	Button3,
+	/// Scroll up.
+	Button4,
+	/// Scroll down.
+	Button5,
+}
+
+// TODO Specify units in doc
+/// An enumeration of input actions.
+#[derive(Debug)]
+pub enum Input {
+	// TODO Specify keycodes
+	/// Keyboard key press.
+	KeyPress(Keycode),
+	/// Keyboard key release.
+	KeyRelease(Keycode),
+
+	/// Moving the cursor relative to the previous position.
+	RelativeMove {
+		/// The X delta relative to the previous position.
+		delta_x: i32,
+		/// The Y delta relative to the previous position.
+		delta_y: i32,
+	},
+
+	/// Moving the cursor to an absolute position.
+	AbsoluteMove {
+		/// The X position.
+		x: u32,
+		/// The Y position.
+		y: u32,
+	},
+
+	/// Mouse button press.
+	ButtonPress(MouseButton),
+	/// Mouse button release.
+	ButtonRelease(MouseButton),
+
+	// TODO touchpad
+}
+
+impl TryFrom<EvDevInputEvent> for Input {
+	type Error = ();
+
+	fn try_from(_ev: EvDevInputEvent) -> Result<Self, Self::Error> {
+		// TODO
+		todo!();
+	}
+}
+
+/// Structure managing input devices.
+pub struct InputManager {
+	/// The list of devices.
+	devs: Vec<InputDevice>,
+}
+
+impl InputManager {
+	/// Creates a new instance.
+	///
+	/// The function registers devices to the given poll handler in order to wake it up when a
+	/// device is ready for reading.
+	pub fn new(poll: &mut PollHandler) -> io::Result<Self> {
+		let mut devs = vec![];
+		for ent in fs::read_dir(EV_DEV_DIR)? {
+			let ent = ent?;
+			let ent_type = ent.file_type()?;
+			if ent_type.is_dir() {
+				continue;
+			}
+
+			let path = ent.path();
+			let result = InputDevice::from_path(&path);
+
+			let dev = match result {
+				Ok(dev) => {
+					println!("Acquired input: {}", path.display());
+					dev
+				},
+
+				Err(e) => {
+					eprintln!("Cannot acquire input `{}`: {}", path.display(), e);
+					continue;
+				},
+			};
+
+			poll.add_fd(&dev);
+			devs.push(dev);
+		}
+
+		// TODO Init inotify (hotplug)
+
+		Ok(Self {
+			devs,
+		})
+	}
+
+	/// Consumes and returns the next input. If no input is available, the function returns None.
+	pub fn next(&mut self) -> Option<Input> {
+		// TODO Clean and Optimize
+		for d in &mut self.devs {
+			let mut poll_handler = PollHandler::new();
+			poll_handler.add_fd(d);
+
+			if let Some(i) = d.next().unwrap() {
+				if let Ok(i) = i.try_into() {
+					return Some(i);
+				}
+			}
+		}
+
+		None
+	}
+}

@@ -1,8 +1,4 @@
-//! An input device is either:
-//! - A mouse
-//! - A touchpad
-//! - A touchscreen
-//! - A keyboard
+//! TODO doc
 
 use crate::util;
 use std::ffi::c_int;
@@ -39,7 +35,7 @@ pub struct InputDevice {
 
 impl InputDevice {
 	/// Returns a device from the given device file's path.
-	pub fn from_path(path: PathBuf) -> io::Result<Self> {
+	pub fn from_path(path: &PathBuf) -> io::Result<Self> {
 		Ok(Self {
 			file: File::open(path)?,
 

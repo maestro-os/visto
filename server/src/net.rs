@@ -64,9 +64,6 @@ pub struct Listener {
 	unix_listener: UnixListener,
 	/// The TCP listener.
 	tcp_listener: Option<TcpListener>,
-
-	/// The poll handler, used to waiting until something is to be done.
-	poll_handler: PollHandler,
 }
 
 impl Listener {
@@ -76,18 +73,21 @@ impl Listener {
 	/// - `unix_path` is the path to the Unix socket.
 	/// - `tcp_port` is the port on which the . If network listening is not enabled, this argument
 	/// must be None.
-	pub fn new(unix_path: &str, tcp_port: Option<u16>) -> io::Result<Self> {
-		let mut poll_handler = PollHandler::new();
-
+	/// - `poll` is the poll handler on which sockets are to be registerd.
+	pub fn new(
+		unix_path: &str,
+		tcp_port: Option<u16>,
+		poll: &mut PollHandler,
+	) -> io::Result<Self> {
 		let unix_listener = UnixListener::bind(unix_path)?;
 		unix_listener.set_nonblocking(true)?;
-		poll_handler.add_fd(&unix_listener);
+		poll.add_fd(&unix_listener);
 
 		let tcp_listener = match tcp_port {
 			Some(tcp_port) => {
 				let tcp_listener = TcpListener::bind(format!("0.0.0.0:{}", tcp_port))?;
 				tcp_listener.set_nonblocking(true)?;
-				poll_handler.add_fd(&tcp_listener);
+				poll.add_fd(&tcp_listener);
 
 				Some(tcp_listener)
 			},
@@ -97,14 +97,7 @@ impl Listener {
 		Ok(Self {
 			unix_listener,
 			tcp_listener,
-
-			poll_handler,
 		})
-	}
-
-	/// Returns a mutable reference to the poll handler associated with the listener.
-	pub fn get_poll_handler(&mut self) -> &mut PollHandler {
-		&mut self.poll_handler
 	}
 
 	/// Accepts a new connection. This function is nonblocking and returns None if no new
