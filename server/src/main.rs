@@ -14,8 +14,8 @@ pub mod protocol;
 pub mod screens_layout;
 pub mod util;
 
-use ctx::Context;
 use ctx::client::Client;
+use ctx::Context;
 use id_allocator::IDAllocator;
 use input::InputManager;
 use net::Listener;
@@ -60,7 +60,8 @@ fn parse_display(s: &str) -> Result<usize, String> {
 		}
 	}
 
-	s[1..].parse::<usize>()
+	s[1..]
+		.parse::<usize>()
 		.map_err(|_| format!("Invalid display `{}`", s))
 }
 
@@ -81,7 +82,7 @@ fn parse_args() -> Result<Args, String> {
 
 			_ if matches!(arg.chars().next(), Some(':')) => {
 				args.display = parse_display(&arg)?;
-			},
+			}
 
 			_ => return Err(format!("Invalid argument `{}`", arg)),
 		}
@@ -93,18 +94,16 @@ fn parse_args() -> Result<Args, String> {
 #[allow(dead_code)]
 fn main() {
 	// Parsing arguments
-	let args = parse_args()
-		.unwrap_or_else(|e| {
-			eprintln!("error parsing arguments: {}", e);
-			exit(1);
-		});
+	let args = parse_args().unwrap_or_else(|e| {
+		eprintln!("error parsing arguments: {}", e);
+		exit(1);
+	});
 
 	// Reading extensions list
-	extension::load_extensions_list(Path::new(extension::LIST_PATH))
-		.unwrap_or_else(|e| {
-			eprintln!("error reading extensions list: {}", e);
-			exit(1);
-		});
+	extension::load_extensions_list(Path::new(extension::LIST_PATH)).unwrap_or_else(|e| {
+		eprintln!("error reading extensions list: {}", e);
+		exit(1);
+	});
 
 	// Scanning for DRI cards
 	let dri_cards = DRICard::scan();
@@ -112,11 +111,10 @@ fn main() {
 	let mut poll = PollHandler::new();
 
 	// Scanning for input devices
-	let mut input_manager = InputManager::new(&mut poll)
-		.unwrap_or_else(|e| {
-			eprintln!("error initializing input manager: {}", e);
-			exit(1);
-		});
+	let mut input_manager = InputManager::new(&mut poll).unwrap_or_else(|e| {
+		eprintln!("error initializing input manager: {}", e);
+		exit(1);
+	});
 
 	// Creating context
 	let mut ctx = Context::new();
@@ -131,11 +129,10 @@ fn main() {
 			None
 		}
 	};
-	let mut listener = Listener::new(&unix_path, tcp_port, &mut poll)
-		.unwrap_or_else(| e | {
-			eprintln!("Cannot listen for incoming connections: {}", e);
-			exit(1);
-		});
+	let mut listener = Listener::new(&unix_path, tcp_port, &mut poll).unwrap_or_else(|e| {
+		eprintln!("Cannot listen for incoming connections: {}", e);
+		exit(1);
+	});
 
 	let mut client_id_allocator = IDAllocator::from_range(0..8192);
 	loop {
@@ -151,13 +148,13 @@ fn main() {
 				let client = Client::new(id, stream);
 
 				ctx.add_client(client, &mut poll);
-			},
+			}
 
-			Ok(None) => {},
+			Ok(None) => {}
 
 			Err(e) => {
 				eprintln!("Failed to accept client connection: {}", e);
-			},
+			}
 		}
 
 		// Ticking clients

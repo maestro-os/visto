@@ -10,91 +10,56 @@ pub mod framebuffer;
 macro_rules! ioc {
 	($a:expr, $b:expr, $c:expr, $d:expr) => {
 		(($a) << 30) | (($b) << 8) | ($c) | (($d) << 16)
-	}
+	};
 }
 
 /// ioctl macro: TODO doc
 macro_rules! io {
 	($a:expr, $b:expr) => {
 		ioc!(0, $a, $b, 0)
-	}
+	};
 }
 
 /// ioctl macro: TODO doc
 macro_rules! iow {
 	($a:expr, $b:expr, $c:ty) => {
 		ioc!(1, $a, $b, std::mem::size_of::<$c>() as u64)
-	}
+	};
 }
 
 /// ioctl macro: TODO doc
 macro_rules! ior {
 	($a:expr, $b:expr, $c:ty) => {
 		ioc!(2, $a, $b, std::mem::size_of::<$c>() as u64)
-	}
+	};
 }
 
 /// ioctl macro: TODO doc
 macro_rules! iowr {
 	($a:expr, $b:expr, $c:ty) => {
 		ioc!(3, $a, $b, std::mem::size_of::<$c>() as u64)
-	}
+	};
 }
 
 /// DRM ioctl command base.
 const DRM_IOCTL_BASE: u64 = b'd' as u64;
 /// DRM ioctl command: Get DRM card resources.
-const DRM_IOCTL_MODE_GETRESOURCES: u64 = iowr!(
-	DRM_IOCTL_BASE,
-	0xa0,
-	card::DRMModeCardRes
-);
+const DRM_IOCTL_MODE_GETRESOURCES: u64 = iowr!(DRM_IOCTL_BASE, 0xa0, card::DRMModeCardRes);
 /// DRM ioctl command: Get DRM encoder.
-const DRM_IOCTL_MODE_GETCRTC: u64 = iowr!(
-	DRM_IOCTL_BASE,
-	0xa1,
-	connector::DRMModeCRTC
-);
+const DRM_IOCTL_MODE_GETCRTC: u64 = iowr!(DRM_IOCTL_BASE, 0xa1, connector::DRMModeCRTC);
 /// DRM ioctl command: Get DRM encoder.
-const DRM_IOCTL_MODE_GETENCODER: u64 = iowr!(
-	DRM_IOCTL_BASE,
-	0xa6,
-	connector::DRMModeEncoder
-);
+const DRM_IOCTL_MODE_GETENCODER: u64 = iowr!(DRM_IOCTL_BASE, 0xa6, connector::DRMModeEncoder);
 /// DRM ioctl command: Get DRM connector.
-const DRM_IOCTL_MODE_GETCONNECTOR: u64 = iowr!(
-	DRM_IOCTL_BASE,
-	0xa7,
-	connector::DRMModeGetConnector
-);
+const DRM_IOCTL_MODE_GETCONNECTOR: u64 =
+	iowr!(DRM_IOCTL_BASE, 0xa7, connector::DRMModeGetConnector);
 /// DRM ioctl command: Creates a framebuffer.
-const DRM_IOCTL_MODE_ADDFB: u64 = iowr!(
-	DRM_IOCTL_BASE,
-	0xae,
-	framebuffer::DRMModeFBCmd
-);
+const DRM_IOCTL_MODE_ADDFB: u64 = iowr!(DRM_IOCTL_BASE, 0xae, framebuffer::DRMModeFBCmd);
 /// DRM ioctl command: Removes a framebuffer.
-const DRM_IOCTL_MODE_RMFB: u64 = iowr!(
-	DRM_IOCTL_BASE,
-	0xaf,
-	u32
-);
+const DRM_IOCTL_MODE_RMFB: u64 = iowr!(DRM_IOCTL_BASE, 0xaf, u32);
 
 /// DRM ioctl command: Create a dumb buffer.
-const DRM_IOCTL_MODE_PAGE_FLIP: u64 = iowr!(
-	DRM_IOCTL_BASE,
-	0xb0,
-	connector::DRMModeCRTCPageFlip
-);
+const DRM_IOCTL_MODE_PAGE_FLIP: u64 = iowr!(DRM_IOCTL_BASE, 0xb0, connector::DRMModeCRTCPageFlip);
 /// DRM ioctl command: Create a dumb buffer.
-const DRM_IOCTL_MODE_CREATE_DUMB: u64 = iowr!(
-	DRM_IOCTL_BASE,
-	0xb2,
-	framebuffer::DRMModeCreateDumb
-);
+const DRM_IOCTL_MODE_CREATE_DUMB: u64 = iowr!(DRM_IOCTL_BASE, 0xb2, framebuffer::DRMModeCreateDumb);
 /// DRM ioctl command: Map a dumb buffer.
-const DRM_IOCTL_MODE_MAP_DUMB: u64 = iowr!(
-	DRM_IOCTL_BASE,
-	0xb3,
-	framebuffer::DRMModeMapDumb
-);
+const DRM_IOCTL_MODE_MAP_DUMB: u64 = iowr!(DRM_IOCTL_BASE, 0xb3, framebuffer::DRMModeMapDumb);

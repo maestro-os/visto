@@ -1,14 +1,14 @@
 //! TODO doc
 
-use crate::ctx::Context;
+use super::Request;
 use crate::ctx::client::Client;
+use crate::ctx::Context;
+use crate::protocol;
 use crate::protocol::error::Error;
 use crate::protocol::request::HandleError;
-use crate::protocol;
 use crate::util;
 use std::mem::size_of;
 use std::num::NonZeroU32;
-use super::Request;
 
 /// The header of the request's reply.
 #[repr(C, packed)]
@@ -59,7 +59,8 @@ impl Request for GetGeometry {
 	) -> Result<(), HandleError> {
 		let drawable = NonZeroU32::new(self.drawable)
 			.ok_or(HandleError::Client(Error::Drawable(self.drawable)))?;
-		let drawable = ctx.get_drawable(drawable)
+		let drawable = ctx
+			.get_drawable(drawable)
 			.ok_or(HandleError::Client(Error::Drawable(self.drawable)))?;
 		let rect = drawable.get_rectangle();
 
@@ -76,8 +77,7 @@ impl Request for GetGeometry {
 			border_width: drawable.get_border_width(),
 			_padding: [0; 10],
 		};
-		client.write_obj(&reply)
-			.map_err(|e| HandleError::IO(e))?;
+		client.write_obj(&reply).map_err(|e| HandleError::IO(e))?;
 
 		Ok(())
 	}
@@ -89,9 +89,7 @@ pub fn read(buff: &[u8], _: u8) -> Result<Option<Box<dyn Request>>, Error> {
 		return Ok(None);
 	}
 
-	let hdr: &GetGeometryHdr = unsafe {
-		util::reinterpret(&buff[0])
-	};
+	let hdr: &GetGeometryHdr = unsafe { util::reinterpret(&buff[0]) };
 
 	Ok(Some(Box::new(GetGeometry {
 		drawable: hdr.drawable,

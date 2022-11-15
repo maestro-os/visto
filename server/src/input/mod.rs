@@ -66,7 +66,6 @@ pub enum Input {
 	ButtonPress(MouseButton),
 	/// Mouse button release.
 	ButtonRelease(MouseButton),
-
 	// TODO touchpad
 }
 
@@ -107,12 +106,12 @@ impl InputManager {
 				Ok(dev) => {
 					println!("Acquired input: {}", path.display());
 					dev
-				},
+				}
 
 				Err(e) => {
 					eprintln!("Cannot acquire input `{}`: {}", path.display(), e);
 					continue;
-				},
+				}
 			};
 
 			poll.add_fd(&dev);
@@ -139,10 +138,7 @@ impl InputManager {
 		println!("=> {:?}", fds);
 
 		for d in &mut self.devs {
-			if !fds.iter()
-				.filter(|f| **f == d.as_raw_fd())
-				.next()
-				.is_some() {
+			if !fds.iter().filter(|f| **f == d.as_raw_fd()).next().is_some() {
 				continue;
 			}
 

@@ -46,12 +46,12 @@ impl PollHandler {
 			libc::poll(self.fds.as_mut_ptr(), self.fds.len() as _, -1);
 		}
 
-
 		// Remove invalid (closed?) file descriptors from the list
 		// FIXME self.fds.retain(|fd| fd.revents | libc::POLLNVAL == 0);
 
 		// Collecting results
-		self.fds.iter()
+		self.fds
+			.iter()
 			.filter(|fd| fd.revents | libc::POLLIN != 0)
 			.map(|fd| fd.fd)
 			.collect()

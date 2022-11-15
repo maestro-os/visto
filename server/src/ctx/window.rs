@@ -1,5 +1,6 @@
 //! TODO doc
 
+use super::Drawable;
 use crate::ctx::Context;
 use crate::ctx::Screen;
 use crate::protocol::BackingStore;
@@ -13,7 +14,6 @@ use std::cmp::min;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::num::NonZeroU32;
-use super::Drawable;
 
 /// A property associated to a window.
 #[derive(Debug)]

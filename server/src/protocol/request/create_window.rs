@@ -1,20 +1,20 @@
 //! TODO doc
 
-use crate::ctx::Context;
+use super::Request;
 use crate::ctx::client::Client;
 use crate::ctx::window::Window;
 use crate::ctx::window::WindowAttributes;
+use crate::ctx::Context;
+use crate::protocol::error::Error;
+use crate::protocol::request::HandleError;
 use crate::protocol::BackingStore;
 use crate::protocol::BitGravity;
 use crate::protocol::Class;
 use crate::protocol::Rectangle;
 use crate::protocol::WinGravity;
-use crate::protocol::error::Error;
-use crate::protocol::request::HandleError;
 use crate::util;
 use std::mem::size_of;
 use std::num::NonZeroU32;
-use super::Request;
 
 /// Enumeration of window attribute values read from a request.
 pub enum AttrValue {
@@ -214,9 +214,7 @@ pub fn read(buff: &[u8], depth: u8) -> Result<Option<Box<dyn Request>>, Error> {
 		return Ok(None);
 	}
 
-	let hdr: &CreateWindowHdr = unsafe {
-		util::reinterpret(&buff[0])
-	};
+	let hdr: &CreateWindowHdr = unsafe { util::reinterpret(&buff[0]) };
 
 	let attrs_buff = &buff[size_of::<CreateWindowHdr>()..];
 	let attrs = read_attrs(hdr.value_mask, attrs_buff)?;

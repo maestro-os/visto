@@ -1,14 +1,14 @@
 //! TODO doc
 
-use crate::ctx::Context;
+use super::create_window;
+use super::Request;
 use crate::ctx::client::Client;
+use crate::ctx::Context;
 use crate::protocol::error::Error;
 use crate::protocol::request::HandleError;
 use crate::util;
 use std::mem::size_of;
 use std::num::NonZeroU32;
-use super::Request;
-use super::create_window;
 
 /// Header of the `ChangeWindowAttributes` request.
 #[repr(C, packed)]
@@ -36,9 +36,10 @@ impl Request for ChangeWindowAttributes {
 		_client: &mut Client,
 		_seq_nbr: u16,
 	) -> Result<(), HandleError> {
-		let wid = NonZeroU32::new(self.window)
-			.ok_or(HandleError::Client(Error::Window(self.window)))?;
-		let win = ctx.get_window_mut(wid)
+		let wid =
+			NonZeroU32::new(self.window).ok_or(HandleError::Client(Error::Window(self.window)))?;
+		let win = ctx
+			.get_window_mut(wid)
 			.ok_or(HandleError::Client(Error::Window(self.window)))?;
 		create_window::set_attrs(&mut win.attributes, &self.changed_attrs);
 
@@ -52,9 +53,7 @@ pub fn read(buff: &[u8], _: u8) -> Result<Option<Box<dyn Request>>, Error> {
 		return Ok(None);
 	}
 
-	let hdr: &ChangeWindowAttributesHdr = unsafe {
-		util::reinterpret(&buff[0])
-	};
+	let hdr: &ChangeWindowAttributesHdr = unsafe { util::reinterpret(&buff[0]) };
 
 	let attrs_buff = &buff[size_of::<ChangeWindowAttributesHdr>()..];
 	let changed_attrs = create_window::read_attrs(hdr.value_mask, attrs_buff)?;

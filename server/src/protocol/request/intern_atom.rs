@@ -1,15 +1,15 @@
 //! TODO doc
 
-use crate::ctx::Context;
+use super::Request;
 use crate::ctx::client::Client;
+use crate::ctx::Context;
+use crate::protocol;
 use crate::protocol::error::Error;
 use crate::protocol::request::HandleError;
-use crate::protocol;
 use crate::util;
 use std::mem::size_of;
-use std::str::FromStr;
 use std::str;
-use super::Request;
+use std::str::FromStr;
 
 /// The header of the request's reply.
 #[repr(C, packed)]
@@ -67,8 +67,7 @@ impl Request for InternAtom {
 			atom,
 			_padding1: [0; 20],
 		};
-		client.write_obj(&hdr)
-			.map_err(|e| HandleError::IO(e))?;
+		client.write_obj(&hdr).map_err(|e| HandleError::IO(e))?;
 
 		Ok(())
 	}
@@ -82,9 +81,7 @@ pub fn read(buff: &[u8], only_if_exists: u8) -> Result<Option<Box<dyn Request>>,
 		return Ok(None);
 	}
 
-	let hdr: &InternAtomHdr = unsafe {
-		util::reinterpret(&buff[0])
-	};
+	let hdr: &InternAtomHdr = unsafe { util::reinterpret(&buff[0]) };
 
 	if buff.len() < size_of::<InternAtomHdr>() + hdr.name_length as usize {
 		return Ok(None);

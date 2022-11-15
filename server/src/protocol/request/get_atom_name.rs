@@ -1,13 +1,13 @@
 //! TODO doc
 
-use crate::ctx::Context;
+use super::Request;
 use crate::ctx::client::Client;
+use crate::ctx::Context;
+use crate::protocol;
 use crate::protocol::error::Error;
 use crate::protocol::request::HandleError;
-use crate::protocol;
 use crate::util;
 use std::mem::size_of;
-use super::Request;
 
 /// The reply.
 #[repr(C, packed)]
@@ -48,7 +48,8 @@ impl Request for GetAtomName {
 		client: &mut Client,
 		seq_nbr: u16,
 	) -> Result<(), HandleError> {
-		let atom = ctx.get_atom(self.atom)
+		let atom = ctx
+			.get_atom(self.atom)
 			.ok_or(HandleError::Client(Error::Atom(self.atom)))?;
 
 		let len = atom.len();
@@ -66,16 +67,17 @@ impl Request for GetAtomName {
 
 			_padding1: [0; 22],
 		};
-		client.write_obj(&hdr)
-			.map_err(|e| HandleError::IO(e))?;
+		client.write_obj(&hdr).map_err(|e| HandleError::IO(e))?;
 
 		// Write name
-		client.write(atom.as_bytes())
+		client
+			.write(atom.as_bytes())
 			.map_err(|e| HandleError::IO(e))?;
 
 		// Write padding
 		let pad: [u8; 4] = [0; 4];
-		client.write(&pad[..protocol::pad(len)])
+		client
+			.write(&pad[..protocol::pad(len)])
 			.map_err(|e| HandleError::IO(e))?;
 
 		Ok(())
@@ -87,9 +89,7 @@ pub fn read(buff: &[u8], _: u8) -> Result<Option<Box<dyn Request>>, Error> {
 	if buff.len() < size_of::<GetAtomNameHdr>() {
 		return Ok(None);
 	}
-	let hdr: &GetAtomNameHdr = unsafe {
-		util::reinterpret(&buff[0])
-	};
+	let hdr: &GetAtomNameHdr = unsafe { util::reinterpret(&buff[0]) };
 
 	Ok(Some(Box::new(GetAtomName {
 		atom: hdr.atom,

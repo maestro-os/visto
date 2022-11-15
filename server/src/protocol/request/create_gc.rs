@@ -1,14 +1,14 @@
 //! The `CreateGC` request allows to create a graphics context.
 
-use crate::ctx::Context;
+use super::Request;
 use crate::ctx::client::Client;
-use crate::ctx::gc::GC;
 use crate::ctx::gc;
+use crate::ctx::gc::GC;
+use crate::ctx::Context;
 use crate::protocol::error::Error;
 use crate::protocol::request::HandleError;
 use crate::util;
 use std::mem::size_of;
-use super::Request;
 
 /// TODO doc
 #[repr(C, packed)]
@@ -48,9 +48,7 @@ pub fn read(buff: &[u8], _: u8) -> Result<Option<Box<dyn Request>>, Error> {
 		return Ok(None);
 	}
 
-	let hdr: &CreateGCHdr = unsafe {
-		util::reinterpret(&buff[0])
-	};
+	let hdr: &CreateGCHdr = unsafe { util::reinterpret(&buff[0]) };
 
 	let mut values = vec![];
 

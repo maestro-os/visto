@@ -1,14 +1,14 @@
 //! TODO doc
 
-use crate::ctx::Context;
+use super::Request;
 use crate::ctx::client::Client;
 use crate::ctx::window::Property;
+use crate::ctx::Context;
 use crate::protocol::error::Error;
 use crate::protocol::request::HandleError;
 use crate::util;
 use std::mem::size_of;
 use std::num::NonZeroU32;
-use super::Request;
 
 /// The action to perform on the property.
 pub enum ChangePropertyMode {
@@ -77,12 +77,14 @@ impl Request for ChangeProperty {
 		_client: &mut Client,
 		_seq_nbr: u16,
 	) -> Result<(), HandleError> {
-		let prop_name = ctx.get_atom(self.property)
+		let prop_name = ctx
+			.get_atom(self.property)
 			.ok_or(HandleError::Client(Error::Atom(self.property)))?
 			.to_owned();
-		let wid = NonZeroU32::new(self.window)
-			.ok_or(HandleError::Client(Error::Window(self.window)))?;
-		let win = ctx.get_window_mut(wid)
+		let wid =
+			NonZeroU32::new(self.window).ok_or(HandleError::Client(Error::Window(self.window)))?;
+		let win = ctx
+			.get_window_mut(wid)
 			.ok_or(HandleError::Client(Error::Window(self.window)))?;
 
 		if let Some(prop) = win.get_property_mut(&prop_name) {
@@ -98,7 +100,7 @@ impl Request for ChangeProperty {
 
 					let prop = Property::new(self.type_atom, self.format, self.data.clone());
 					win.create_property(prop_name, prop);
-				},
+				}
 
 				ChangePropertyMode::Prepend => prop.prepend_data(&self.data),
 				ChangePropertyMode::Append => prop.append_data(&self.data),
@@ -119,9 +121,7 @@ pub fn read(buff: &[u8], mode: u8) -> Result<Option<Box<dyn Request>>, Error> {
 	if buff.len() < size_of::<ChangePropertyHdr>() {
 		return Ok(None);
 	}
-	let hdr: &ChangePropertyHdr = unsafe {
-		util::reinterpret(&buff[0])
-	};
+	let hdr: &ChangePropertyHdr = unsafe { util::reinterpret(&buff[0]) };
 
 	let mode = ChangePropertyMode::from(mode).ok_or(Error::Value(mode as _))?;
 

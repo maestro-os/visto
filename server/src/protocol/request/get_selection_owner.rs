@@ -1,13 +1,13 @@
 //! TODO doc
 
-use crate::ctx::Context;
+use super::Request;
 use crate::ctx::client::Client;
+use crate::ctx::Context;
+use crate::protocol;
 use crate::protocol::error::Error;
 use crate::protocol::request::HandleError;
-use crate::protocol;
 use crate::util;
 use std::mem::size_of;
-use super::Request;
 
 /// The header of the request's reply.
 #[repr(C, packed)]
@@ -19,7 +19,7 @@ pub struct GetSelectionOwnerReply {
 	/// The sequence number of the request associated with the reply.
 	seq_nbr: u16,
 	/// The length of the reply in units of 4 bytes.
-    reply_length: u32,
+	reply_length: u32,
 	/// The ID of the owner window.
 	owner: u32,
 	/// Padding.
@@ -46,9 +46,11 @@ impl Request for GetSelectionOwner {
 		client: &mut Client,
 		seq_nbr: u16,
 	) -> Result<(), HandleError> {
-		let selection_name = ctx.get_atom(self.atom)
+		let selection_name = ctx
+			.get_atom(self.atom)
 			.ok_or(HandleError::Client(Error::Atom(self.atom)))?;
-		let owner = ctx.get_selection(&selection_name)
+		let owner = ctx
+			.get_selection(&selection_name)
 			.map(|selection| selection.get_owner())
 			.flatten()
 			.map(|owner| owner.get())
@@ -62,8 +64,7 @@ impl Request for GetSelectionOwner {
 			owner,
 			_padding1: [0; 20],
 		};
-		client.write_obj(&hdr)
-			.map_err(|e| HandleError::IO(e))?;
+		client.write_obj(&hdr).map_err(|e| HandleError::IO(e))?;
 
 		Ok(())
 	}
@@ -75,9 +76,7 @@ pub fn read(buff: &[u8], _: u8) -> Result<Option<Box<dyn Request>>, Error> {
 		return Ok(None);
 	}
 
-	let hdr: &GetSelectionOwnerHdr = unsafe {
-		util::reinterpret(&buff[0])
-	};
+	let hdr: &GetSelectionOwnerHdr = unsafe { util::reinterpret(&buff[0]) };
 
 	Ok(Some(Box::new(GetSelectionOwner {
 		atom: hdr.atom,

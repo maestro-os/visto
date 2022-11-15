@@ -1,12 +1,12 @@
 //! A connector represents a screen.
 
-use crate::output::card::DRICard;
-use std::os::unix::io::AsRawFd;
+use super::framebuffer::Framebuffer;
 use super::DRM_IOCTL_MODE_GETCONNECTOR;
 use super::DRM_IOCTL_MODE_GETCRTC;
 use super::DRM_IOCTL_MODE_GETENCODER;
 use super::DRM_IOCTL_MODE_PAGE_FLIP;
-use super::framebuffer::Framebuffer;
+use crate::output::card::DRICard;
+use std::os::unix::io::AsRawFd;
 
 /// TODO doc
 #[derive(Clone, Debug, Default)]
@@ -132,7 +132,7 @@ pub struct DRMModeGetConnector {
 	/// Type of the connector.
 	connector_type: u32,
 	/// Type-specific connector number.
-	/// 
+	///
 	/// This is not an object ID. This is a per-type connector number. Each (type, type_id)
 	/// combination is unique across all connectors of a DRM device.
 	connector_type_id: u32,
@@ -182,13 +182,7 @@ impl DRIConnector {
 		let mut conn = DRMModeGetConnector::default();
 		conn.connector_id = id;
 
-		let res = unsafe {
-			libc::ioctl(
-				fd,
-				DRM_IOCTL_MODE_GETCONNECTOR,
-				&mut conn as *const _
-			)
-		};
+		let res = unsafe { libc::ioctl(fd, DRM_IOCTL_MODE_GETCONNECTOR, &mut conn as *const _) };
 		if res < 0 {
 			return None;
 		}
@@ -213,13 +207,7 @@ impl DRIConnector {
 		conn.props_ptr = connector.props.as_mut_ptr() as _;
 		conn.prop_values_ptr = connector.prop_values.as_mut_ptr() as _;
 
-		let res = unsafe {
-			libc::ioctl(
-				fd,
-				DRM_IOCTL_MODE_GETCONNECTOR,
-				&mut conn as *const _
-			)
-		};
+		let res = unsafe { libc::ioctl(fd, DRM_IOCTL_MODE_GETCONNECTOR, &mut conn as *const _) };
 		if res < 0 {
 			return None;
 		}
@@ -251,13 +239,7 @@ impl DRIConnector {
 		// Get encoder
 		let mut encoder = DRMModeEncoder::default();
 		encoder.encoder_id = self.encoder_id;
-		let res = unsafe {
-			libc::ioctl(
-				fd,
-				DRM_IOCTL_MODE_GETENCODER,
-				&mut encoder as *mut _
-			)
-		};
+		let res = unsafe { libc::ioctl(fd, DRM_IOCTL_MODE_GETENCODER, &mut encoder as *mut _) };
 		if res < 0 {
 			return None;
 		}
@@ -265,13 +247,7 @@ impl DRIConnector {
 		// Get CRTC
 		let mut crtc = DRMModeCRTC::default();
 		crtc.crtc_id = encoder.crtc_id;
-		let res = unsafe {
-			libc::ioctl(
-				fd,
-				DRM_IOCTL_MODE_GETCRTC,
-				&mut crtc as *mut _
-			)
-		};
+		let res = unsafe { libc::ioctl(fd, DRM_IOCTL_MODE_GETCRTC, &mut crtc as *mut _) };
 		if res < 0 {
 			return None;
 		}
@@ -300,11 +276,7 @@ impl DRIConnector {
 		flip.flags = 0x1;
 
 		unsafe {
-			libc::ioctl(
-				fd,
-				DRM_IOCTL_MODE_PAGE_FLIP,
-				&mut flip as *const _
-			);
+			libc::ioctl(fd, DRM_IOCTL_MODE_PAGE_FLIP, &mut flip as *const _);
 		}
 	}
 }

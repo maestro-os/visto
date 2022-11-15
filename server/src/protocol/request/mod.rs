@@ -16,11 +16,11 @@ pub mod query_extension;
 pub mod query_pointer;
 pub mod ungrab_server;
 
-use crate::ctx::Context;
 use crate::ctx::client::Client;
-use crate::protocol::XRequest;
+use crate::ctx::Context;
 use crate::protocol::error::Error;
 use crate::protocol::error::XError;
+use crate::protocol::XRequest;
 use crate::util;
 use std::io;
 use std::mem::size_of;
@@ -289,7 +289,7 @@ pub fn build_request(
 
 	match ctx.get_custom_requests().get(&opcode) {
 		Some(f) => return f(buff, optional),
-		None => {},
+		None => {}
 	}
 
 	match opcode {
@@ -347,11 +347,8 @@ pub trait RequestReader {
 	/// If not enough data is present in the buffer, the function returns None.
 	///
 	/// `ctx` is the current context.
-	fn read(
-		&self,
-		ctx: &Context,
-		buff: &[u8],
-	) -> Result<Option<(Box<dyn Request>, usize)>, XError>;
+	fn read(&self, ctx: &Context, buff: &[u8])
+		-> Result<Option<(Box<dyn Request>, usize)>, XError>;
 }
 
 /// The default request reader.
@@ -369,9 +366,7 @@ impl RequestReader for DefaultRequestReader {
 			return Ok(None);
 		}
 
-		let hdr: &XRequest = unsafe {
-			util::reinterpret(&buff[0])
-		};
+		let hdr: &XRequest = unsafe { util::reinterpret(&buff[0]) };
 		// Required number of bytes
 		let req = hdr.length as usize * 4;
 

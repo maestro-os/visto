@@ -1,16 +1,16 @@
 //! A framebuffer is a region of memory containing the data for each pixels to be displayed on
 //! screen.
 
-use std::ffi::c_void;
-use std::mem::size_of;
-use std::os::unix::io::AsRawFd;
-use std::ptr::NonNull;
-use std::ptr::null_mut;
+use super::card::DRICard;
 use super::DRM_IOCTL_MODE_ADDFB;
 use super::DRM_IOCTL_MODE_CREATE_DUMB;
 use super::DRM_IOCTL_MODE_MAP_DUMB;
 use super::DRM_IOCTL_MODE_RMFB;
-use super::card::DRICard;
+use std::ffi::c_void;
+use std::mem::size_of;
+use std::os::unix::io::AsRawFd;
+use std::ptr::null_mut;
+use std::ptr::NonNull;
 
 /// Structure used by the command to create a dumb buffer.
 #[derive(Clone, Debug, Default)]
@@ -90,13 +90,7 @@ impl<'a> Framebuffer<'a> {
 		dumb_buff.width = width;
 		dumb_buff.bpp = 32;
 		dumb_buff.flags = 0;
-		let res = unsafe {
-			libc::ioctl(
-				fd,
-				DRM_IOCTL_MODE_CREATE_DUMB,
-				&mut dumb_buff as *mut _
-			)
-		};
+		let res = unsafe { libc::ioctl(fd, DRM_IOCTL_MODE_CREATE_DUMB, &mut dumb_buff as *mut _) };
 		if res < 0 {
 			return Err(());
 		}
@@ -109,13 +103,7 @@ impl<'a> Framebuffer<'a> {
 		cmd.bpp = 32;
 		cmd.depth = 24;
 		cmd.handle = dumb_buff.handle;
-		let res = unsafe {
-			libc::ioctl(
-				fd,
-				DRM_IOCTL_MODE_ADDFB,
-				&mut cmd as *mut _
-			)
-		};
+		let res = unsafe { libc::ioctl(fd, DRM_IOCTL_MODE_ADDFB, &mut cmd as *mut _) };
 		if res < 0 {
 			return Err(());
 		}
@@ -142,13 +130,7 @@ impl<'a> Framebuffer<'a> {
 
 		let mut cmd = DRMModeMapDumb::default();
 		cmd.handle = self.dumb_handle;
-		let res = unsafe {
-			libc::ioctl(
-				fd,
-				DRM_IOCTL_MODE_MAP_DUMB,
-				&mut cmd as *mut _
-			)
-		};
+		let res = unsafe { libc::ioctl(fd, DRM_IOCTL_MODE_MAP_DUMB, &mut cmd as *mut _) };
 		if res < 0 {
 			return Err(());
 		}
@@ -160,7 +142,7 @@ impl<'a> Framebuffer<'a> {
 				libc::PROT_READ | libc::PROT_WRITE,
 				libc::MAP_SHARED,
 				fd,
-				cmd.offset as _
+				cmd.offset as _,
 			)
 		};
 		if buff_ptr.is_null() || buff_ptr == libc::MAP_FAILED {
@@ -187,10 +169,7 @@ impl<'a> Framebuffer<'a> {
 		// If the buffer is mapped, free it
 		if let Some(mut buff) = self.buff {
 			unsafe {
-				libc::munmap(
-					buff.as_mut() as *mut _ as *mut _,
-					self.buff_len
-				);
+				libc::munmap(buff.as_mut() as *mut _ as *mut _, self.buff_len);
 			}
 
 			// TODO destroy dumb buffer
@@ -199,11 +178,7 @@ impl<'a> Framebuffer<'a> {
 		// Remove the framebuffer
 		let fd = self.card.get_device().as_raw_fd();
 		unsafe {
-			libc::ioctl(
-				fd,
-				DRM_IOCTL_MODE_RMFB,
-				&self.fb_id,
-			);
+			libc::ioctl(fd, DRM_IOCTL_MODE_RMFB, &self.fb_id);
 		}
 	}
 }

@@ -1,14 +1,14 @@
 //! TODO doc
 
-use crate::ctx::Context;
+use super::Request;
 use crate::ctx::client::Client;
+use crate::ctx::Context;
+use crate::protocol;
 use crate::protocol::error::Error;
 use crate::protocol::request::HandleError;
-use crate::protocol;
 use crate::util;
 use std::mem::size_of;
 use std::num::NonZeroU32;
-use super::Request;
 
 /// The reply.
 #[repr(C, packed)]
@@ -63,9 +63,10 @@ impl Request for QueryPointer {
 		client: &mut Client,
 		seq_nbr: u16,
 	) -> Result<(), HandleError> {
-		let wid = NonZeroU32::new(self.window)
-			.ok_or(HandleError::Client(Error::Window(self.window)))?;
-		let _win = ctx.get_window_mut(wid)
+		let wid =
+			NonZeroU32::new(self.window).ok_or(HandleError::Client(Error::Window(self.window)))?;
+		let _win = ctx
+			.get_window_mut(wid)
 			.ok_or(HandleError::Client(Error::Window(self.window)))?;
 
 		let hdr = QueryPointerReply {
@@ -74,20 +75,19 @@ impl Request for QueryPointer {
 			seq_nbr,
 			reply_length: 0,
 
-			root: 1, // TODO
+			root: 1,  // TODO
 			child: 0, // TODO
 
 			root_x: 0, // TODO
 			root_y: 0, // TODO
-			win_x: 0, // TODO
-			win_y: 0, // TODO
+			win_x: 0,  // TODO
+			win_y: 0,  // TODO
 
 			mask: 0, // TODO
 
 			_padding: [0; 6],
 		};
-		client.write_obj(&hdr)
-			.map_err(|e| HandleError::IO(e))?;
+		client.write_obj(&hdr).map_err(|e| HandleError::IO(e))?;
 
 		Ok(())
 	}
@@ -98,9 +98,7 @@ pub fn read(buff: &[u8], _: u8) -> Result<Option<Box<dyn Request>>, Error> {
 	if buff.len() < size_of::<QueryPointerHdr>() {
 		return Ok(None);
 	}
-	let hdr: &QueryPointerHdr = unsafe {
-		util::reinterpret(&buff[0])
-	};
+	let hdr: &QueryPointerHdr = unsafe { util::reinterpret(&buff[0]) };
 
 	Ok(Some(Box::new(QueryPointer {
 		window: hdr.window,

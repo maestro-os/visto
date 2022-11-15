@@ -164,10 +164,10 @@ impl<'a> Screen<'a> {
 			min_installed_maps: 1, // TODO
 			max_installed_maps: 1, // TODO
 
-			root_visual: 0, // TODO
+			root_visual: 0,    // TODO
 			backing_stores: 0, // TODO
-			save_unders: 0, // TODO
-			root_depth: 24, // TODO
+			save_unders: 0,    // TODO
+			root_depth: 24,    // TODO
 
 			allowed_depths_len: 1, // TODO
 		};
@@ -182,21 +182,21 @@ impl<'a> Screen<'a> {
 			ptr::copy_nonoverlapping::<u8>(
 				&screen as *const _ as *const u8,
 				&mut data[off],
-				size_of::<protocol::Screen>()
+				size_of::<protocol::Screen>(),
 			);
 			off += size_of::<protocol::Screen>();
 
 			ptr::copy_nonoverlapping::<u8>(
 				&depth as *const _ as *const u8,
 				&mut data[off],
-				size_of::<protocol::Depth>()
+				size_of::<protocol::Depth>(),
 			);
 			off += size_of::<protocol::Depth>();
 
 			ptr::copy_nonoverlapping::<u8>(
 				&visual as *const _ as *const u8,
 				&mut data[off],
-				size_of::<protocol::Visual>()
+				size_of::<protocol::Visual>(),
 			);
 		}
 

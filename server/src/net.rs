@@ -2,9 +2,9 @@
 //! supported.
 
 use crate::poll::PollHandler;
+use std::io;
 use std::io::Read;
 use std::io::Write;
-use std::io;
 use std::net::TcpListener;
 use std::net::TcpStream;
 use std::os::unix::net::UnixListener;
@@ -74,11 +74,7 @@ impl Listener {
 	/// - `tcp_port` is the port on which the . If network listening is not enabled, this argument
 	/// must be None.
 	/// - `poll` is the poll handler on which sockets are to be registerd.
-	pub fn new(
-		unix_path: &str,
-		tcp_port: Option<u16>,
-		poll: &mut PollHandler,
-	) -> io::Result<Self> {
+	pub fn new(unix_path: &str, tcp_port: Option<u16>, poll: &mut PollHandler) -> io::Result<Self> {
 		let unix_listener = UnixListener::bind(unix_path)?;
 		unix_listener.set_nonblocking(true)?;
 		poll.add_fd(&unix_listener);
@@ -90,7 +86,7 @@ impl Listener {
 				poll.add_fd(&tcp_listener);
 
 				Some(tcp_listener)
-			},
+			}
 			None => None,
 		};
 
@@ -107,7 +103,7 @@ impl Listener {
 			Ok((stream, _)) => return Ok(Some(Stream::Unix(stream))),
 
 			// Try the TCP socket if present
-			Err(e) if e.kind() == io::ErrorKind::WouldBlock => {},
+			Err(e) if e.kind() == io::ErrorKind::WouldBlock => {}
 
 			Err(e) => return Err(e),
 		}
@@ -117,7 +113,7 @@ impl Listener {
 				Ok((stream, _)) => return Ok(Some(Stream::Tcp(stream))),
 
 				// No new client
-				Err(e) if e.kind() == io::ErrorKind::WouldBlock => {},
+				Err(e) if e.kind() == io::ErrorKind::WouldBlock => {}
 
 				Err(e) => return Err(e),
 			}

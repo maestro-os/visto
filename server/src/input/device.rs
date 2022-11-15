@@ -4,8 +4,8 @@ use crate::util;
 use std::ffi::c_int;
 use std::ffi::c_short;
 use std::fs::File;
-use std::io::Read;
 use std::io;
+use std::io::Read;
 use std::mem::size_of;
 use std::os::unix::prelude::AsRawFd;
 use std::path::PathBuf;
@@ -60,7 +60,7 @@ pub const SYN_CONFIG: u16 = 1;
 pub const SYN_MT_REPORT: u16 = 2;
 pub const SYN_DROPPED: u16 = 3;
 pub const SYN_MAX: u16 = 0xf;
-pub const SYN_CNT: u16 = SYN_MAX+1;
+pub const SYN_CNT: u16 = SYN_MAX + 1;
 
 /*
  * Keys and buttons
@@ -188,7 +188,7 @@ pub const KEY_KPEQUAL: u16 = 117;
 pub const KEY_KPPLUSMINUS: u16 = 118;
 pub const KEY_PAUSE: u16 = 119;
 /// Compiz Scale (Expose)
-pub const KEY_SCALE: u16 = 120	;
+pub const KEY_SCALE: u16 = 120;
 
 pub const KEY_KPCOMMA: u16 = 121;
 pub const KEY_HANGEUL: u16 = 122;
@@ -563,9 +563,7 @@ impl InputDevice {
 		}
 
 		if self.cursor >= size_of::<EvDevInputEvent>() {
-			let ev = *unsafe {
-				util::reinterpret(&self.buff)
-			};
+			let ev = *unsafe { util::reinterpret(&self.buff) };
 			self.cursor = 0;
 
 			Ok(Some(ev))

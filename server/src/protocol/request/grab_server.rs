@@ -1,11 +1,11 @@
 //! The `GrabServer` request locks the server in order for it to be usable only by the current
 //! client.
 
-use crate::ctx::Context;
+use super::Request;
 use crate::ctx::client::Client;
+use crate::ctx::Context;
 use crate::protocol::error::Error;
 use crate::protocol::request::HandleError;
-use super::Request;
 
 /// Header of the `GrabServer` request.
 #[repr(C, packed)]

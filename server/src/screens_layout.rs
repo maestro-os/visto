@@ -8,7 +8,6 @@ pub struct ScreenModeDesc {
 	pub width: u16,
 	/// The height of the screen in pixels.
 	pub height: u16,
-
 	// TODO Other parameters (gamma, etc...)
 }
 

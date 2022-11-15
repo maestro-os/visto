@@ -1,17 +1,17 @@
 //! The `QueryExtension` request allows to ask for an extention to be loaded.
 
-use crate::ctx::Context;
-use crate::ctx::client::Client;
-use crate::extension;
-use crate::protocol::error::Error;
-use crate::protocol::pad;
-use crate::protocol;
-use crate::util;
-use std::mem::size_of;
-use std::str::FromStr;
-use std::str;
 use super::HandleError;
 use super::Request;
+use crate::ctx::client::Client;
+use crate::ctx::Context;
+use crate::extension;
+use crate::protocol;
+use crate::protocol::error::Error;
+use crate::protocol::pad;
+use crate::util;
+use std::mem::size_of;
+use std::str;
+use std::str::FromStr;
 
 /// The header of the request.
 #[repr(C, packed)]
@@ -68,11 +68,7 @@ impl Request for QueryExtension {
 		let present = ext.is_some();
 		println!("Querying extension `{}`. Present: {}", self.name, present);
 
-		let (
-			major_opcode,
-			first_event,
-			first_error,
-		) = match ext {
+		let (major_opcode, first_event, first_error) = match ext {
 			Some(ext) => {
 				let ext = ext.lock().unwrap();
 
@@ -81,7 +77,7 @@ impl Request for QueryExtension {
 					ext.get_first_event(),
 					ext.get_first_error(),
 				)
-			},
+			}
 
 			None => (0, 0, 0),
 		};
@@ -99,8 +95,7 @@ impl Request for QueryExtension {
 
 			_padding1: [0; 20],
 		};
-		client.write_obj(&reply)
-			.map_err(|e| HandleError::IO(e))?;
+		client.write_obj(&reply).map_err(|e| HandleError::IO(e))?;
 
 		Ok(())
 	}
@@ -111,13 +106,10 @@ pub fn read(buff: &[u8], _: u8) -> Result<Option<Box<dyn Request>>, Error> {
 	if buff.len() < size_of::<QueryExtensionHdr>() {
 		return Ok(None);
 	}
-	let hdr: &QueryExtensionHdr = unsafe {
-		util::reinterpret(&buff[0])
-	};
+	let hdr: &QueryExtensionHdr = unsafe { util::reinterpret(&buff[0]) };
 
-	let len = size_of::<QueryExtensionHdr>()
-		+ hdr.name_length as usize
-		+ pad(hdr.name_length as usize);
+	let len =
+		size_of::<QueryExtensionHdr>() + hdr.name_length as usize + pad(hdr.name_length as usize);
 	if buff.len() < len {
 		return Ok(None);
 	}

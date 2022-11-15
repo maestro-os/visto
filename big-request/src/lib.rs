@@ -5,13 +5,13 @@ mod big_req_enable;
 use std::mem::size_of;
 use visto::ctx::Context;
 use visto::extension::Extension;
-use visto::protocol::XRequest;
 use visto::protocol::error::Error;
 use visto::protocol::error::XError;
-use visto::protocol::request::MAX_REQUEST_LEN;
+use visto::protocol::request;
 use visto::protocol::request::Request;
 use visto::protocol::request::RequestReader;
-use visto::protocol::request;
+use visto::protocol::request::MAX_REQUEST_LEN;
+use visto::protocol::XRequest;
 use visto::util;
 
 /// The big request header.
@@ -39,18 +39,14 @@ impl RequestReader for BigRequestReader {
 			return Ok(None);
 		}
 
-		let hdr: &XRequest = unsafe {
-			util::reinterpret(&buff[0])
-		};
+		let hdr: &XRequest = unsafe { util::reinterpret(&buff[0]) };
 		// Required number of bytes
 		let mut req = hdr.length as usize * 4;
 		if req == 0 {
 			if buff.len() < size_of::<BigRequestHdr>() {
 				return Ok(None);
 			}
-			let hdr: &BigRequestHdr = unsafe {
-				util::reinterpret(&buff[0])
-			};
+			let hdr: &BigRequestHdr = unsafe { util::reinterpret(&buff[0]) };
 
 			req = hdr.extended_length as usize * 4;
 			hdr_len += 4;
@@ -78,17 +74,17 @@ impl RequestReader for BigRequestReader {
 			// TODO seq nbr
 			Err(e) => Err(e.to_protocol(0, 0, opcode)),
 		}
-
 	}
 }
 
 #[no_mangle]
-pub extern fn init(ctx: &mut Context, ext: &Extension) -> bool {
-	ctx.get_custom_requests_mut().insert(ext.get_major_opcode(), Box::new(&big_req_enable::read));
+pub extern "C" fn init(ctx: &mut Context, ext: &Extension) -> bool {
+	ctx.get_custom_requests_mut()
+		.insert(ext.get_major_opcode(), Box::new(&big_req_enable::read));
 	true
 }
 
 #[no_mangle]
-pub extern fn fini() {
+pub extern "C" fn fini() {
 	// TODO Unregister request
 }

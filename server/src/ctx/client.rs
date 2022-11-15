@@ -1,26 +1,26 @@
 //! This module implements support for X protocol clients.
 
+use crate::ctx::gc::GC;
 use crate::ctx::Context;
 use crate::ctx::Screen;
-use crate::ctx::gc::GC;
 use crate::net::Stream;
-use crate::protocol::VENDOR_NAME;
+use crate::protocol;
 use crate::protocol::connect::ClientConnect;
 use crate::protocol::connect::ConnectFailed;
 use crate::protocol::connect::ConnectSuccess;
 use crate::protocol::pad;
 use crate::protocol::request::DefaultRequestReader;
 use crate::protocol::request::HandleError;
-use crate::protocol::request::MAX_REQUEST_LEN;
 use crate::protocol::request::RequestReader;
-use crate::protocol;
+use crate::protocol::request::MAX_REQUEST_LEN;
+use crate::protocol::VENDOR_NAME;
 use crate::util;
 use std::cmp::max;
 use std::collections::HashMap;
 use std::error::Error;
+use std::io;
 use std::io::Read;
 use std::io::Write;
-use std::io;
 use std::mem::size_of;
 use std::num::Wrapping;
 use std::ptr;
@@ -116,9 +116,7 @@ impl Client {
 
 	/// Writes the given object.
 	pub fn write_obj<T>(&mut self, obj: &T) -> io::Result<()> {
-		let slice = unsafe {
-			slice::from_raw_parts(obj as *const _ as *const u8, size_of::<T>())
-		};
+		let slice = unsafe { slice::from_raw_parts(obj as *const _ as *const u8, size_of::<T>()) };
 
 		// Adding padding to make requests at least 32 bytes long
 		let mut data = vec![0; max(slice.len(), 32)];
@@ -175,12 +173,11 @@ impl Client {
 		println!("New client connection succeeded");
 		self.state = ClientState::ConnectSuccess;
 
-		let screens = screens.iter()
-			.map(| s | s.to_protocol_screen())
+		let screens = screens
+			.iter()
+			.map(|s| s.to_protocol_screen())
 			.collect::<Vec<Vec<u8>>>();
-		let screens_len: usize = screens.iter()
-			.map(| s | s.len())
-			.sum();
+		let screens_len: usize = screens.iter().map(|s| s.len()).sum();
 
 		let additional_data_len = 32
 			+ VENDOR_NAME.len()
@@ -199,16 +196,16 @@ impl Client {
 			release_number: crate::RELEASE_NUMBER,
 			resource_id_base: 0xfffffff, // TODO use
 			resource_id_mask: 0xfffffff, // TODO use
-			motion_buffer_size: 0, // TODO
+			motion_buffer_size: 0,       // TODO
 			vendor_length: VENDOR_NAME.len() as _,
 			max_request_length: u16::MAX,
 			roots_screens_number: 1, // TODO
 			pixmap_formats_count: 1, // TODO
-			image_byte_order: 1, // MSB first
+			image_byte_order: 1,     // MSB first
 
-			bitmap_format_bit_order: 0, // LSB first
+			bitmap_format_bit_order: 0,      // LSB first
 			bitmap_format_scanline_unit: 32, // TODO
-			bitmap_format_scanline_pad: 8, // TODO
+			bitmap_format_scanline_pad: 8,   // TODO
 
 			min_keycode: 8,
 			max_keycode: 255,
@@ -243,11 +240,7 @@ impl Client {
 			off += size_of::<ConnectSuccess>();
 
 			let vendor_name = VENDOR_NAME.as_bytes();
-			ptr::copy_nonoverlapping::<u8>(
-				vendor_name.as_ptr(),
-				&mut buf[off],
-				vendor_name.len(),
-			);
+			ptr::copy_nonoverlapping::<u8>(vendor_name.as_ptr(), &mut buf[off], vendor_name.len());
 			off += vendor_name.len() + pad(vendor_name.len());
 
 			ptr::copy_nonoverlapping::<u8>(
@@ -260,11 +253,7 @@ impl Client {
 
 		for s in screens {
 			unsafe {
-				ptr::copy_nonoverlapping::<u8>(
-					s.as_ptr() as *const u8,
-					&mut buf[off],
-					s.len(),
-				);
+				ptr::copy_nonoverlapping::<u8>(s.as_ptr() as *const u8, &mut buf[off], s.len());
 			}
 			off += s.len();
 		}
@@ -280,9 +269,7 @@ impl Client {
 		if self.buff_cursor < size_of::<ClientConnect>() {
 			return Ok(());
 		}
-		let hdr: &ClientConnect = unsafe {
-			util::reinterpret(&self.buff[0])
-		};
+		let hdr: &ClientConnect = unsafe { util::reinterpret(&self.buff[0]) };
 
 		// If not enough bytes are available, return
 		let required_len = size_of::<ClientConnect>()
@@ -303,18 +290,16 @@ impl Client {
 			_ => {
 				self.write_connect_failed("Invalid byte_order value")?;
 				return Ok(());
-			},
+			}
 		}
 
 		// Checking the protocol version is correct
 		let maj_ver = hdr.protocol_major_version;
 		let min_ver = hdr.protocol_minor_version;
 		if maj_ver != protocol::MAJOR_VERSION {
-			self.write_connect_failed(format!(
-				"Unsupported protocol version: {}.{}",
-				maj_ver,
-				min_ver
-			).as_str())?;
+			self.write_connect_failed(
+				format!("Unsupported protocol version: {}.{}", maj_ver, min_ver).as_str(),
+			)?;
 			return Ok(());
 		}
 
@@ -346,19 +331,19 @@ impl Client {
 
 					// Handle the request
 					match request.handle(ctx, self, seq) {
-						Ok(_) => {},
+						Ok(_) => {}
 
 						// Client error, send
 						Err(HandleError::Client(e)) => {
 							// TODO opcode
 							let e = e.to_protocol(seq, 0, 0);
 							self.write_obj(&e)?;
-						},
+						}
 
 						// IO error, close connection
 						Err(HandleError::IO(e)) => return Err(Box::new(e)),
 					}
-				},
+				}
 
 				// No request to handle, break
 				Ok(None) => break,
@@ -387,11 +372,11 @@ impl Client {
 		match self.state {
 			ClientState::Waiting | ClientState::ConnectFailed => {
 				self.handle_connect_request(&ctx.screens)?;
-			},
+			}
 
 			ClientState::ConnectSuccess => {
 				self.handle_request(ctx)?;
-			},
+			}
 		}
 
 		Ok(())

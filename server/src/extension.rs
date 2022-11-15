@@ -66,7 +66,6 @@ pub fn load_extensions_list(path: &Path) -> Result<(), Box<dyn Error>> {
 	Ok(())
 }
 
-
 /// A loaded extension.
 pub struct Extension {
 	/// The name of the extension.
@@ -92,12 +91,11 @@ impl Extension {
 		name: String,
 		path: &Path,
 	) -> Result<Arc<Mutex<Self>>, Box<dyn Error>> {
-		let lib = unsafe {
-			libloading::Library::new(path)
-		}?;
+		let lib = unsafe { libloading::Library::new(path) }?;
 
 		// TODO Allocate only if required by the extension
-		let major_opcode = MAJOR_OPCODE_ALLOCATOR.lock()
+		let major_opcode = MAJOR_OPCODE_ALLOCATOR
+			.lock()
 			.unwrap()
 			.alloc()
 			.ok_or("Failed to allocate a major opcode!")?;
@@ -115,14 +113,16 @@ impl Extension {
 		};
 
 		let init_func = unsafe {
-			ext.lib.get::<libloading::Symbol<extern fn(&mut Context, &Self) -> bool>>(b"init")
+			ext.lib
+				.get::<libloading::Symbol<extern "C" fn(&mut Context, &Self) -> bool>>(b"init")
 		}?;
 		if !init_func(ctx, &ext) {
 			// TODO Error
 			todo!();
 		}
 
-		LOADED_EXTENSIONS.lock()
+		LOADED_EXTENSIONS
+			.lock()
 			.unwrap()
 			.insert(name.clone(), Arc::new(Mutex::new(ext)));
 		Ok(Self::get(&name).unwrap())
@@ -132,10 +132,7 @@ impl Extension {
 	///
 	/// If the extension is not loaded, the function returns None.
 	pub fn get(name: &str) -> Option<Arc<Mutex<Self>>> {
-		LOADED_EXTENSIONS.lock()
-			.unwrap()
-			.get(name)
-			.cloned()
+		LOADED_EXTENSIONS.lock().unwrap().get(name).cloned()
 	}
 
 	/// Returns the major opcode allocated to the extension.
@@ -156,9 +153,8 @@ impl Extension {
 
 impl Drop for Extension {
 	fn drop(&mut self) {
-		let fini_func: Result<libloading::Symbol<extern fn()>, _> = unsafe {
-			self.lib.get(b"fini")
-		};
+		let fini_func: Result<libloading::Symbol<extern "C" fn()>, _> =
+			unsafe { self.lib.get(b"fini") };
 		if let Ok(fini_func) = fini_func {
 			fini_func();
 		}
@@ -188,7 +184,7 @@ pub fn query(
 			// Loading the extension
 			let ext = Extension::load(ctx, name.to_owned(), Path::new(ext_path))?;
 			Ok(Some(ext))
-		},
+		}
 
 		None => Ok(None),
 	}

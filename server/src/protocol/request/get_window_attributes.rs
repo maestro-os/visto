@@ -1,19 +1,19 @@
 //! TODO doc
 
-use crate::ctx::Context;
+use super::Request;
 use crate::ctx::client::Client;
+use crate::ctx::Context;
+use crate::protocol;
+use crate::protocol::error::Error;
+use crate::protocol::request::HandleError;
 use crate::protocol::BackingStore;
 use crate::protocol::BitGravity;
 use crate::protocol::Class;
 use crate::protocol::MapState;
 use crate::protocol::WinGravity;
-use crate::protocol::error::Error;
-use crate::protocol::request::HandleError;
-use crate::protocol;
 use crate::util;
 use std::mem::size_of;
 use std::num::NonZeroU32;
-use super::Request;
 
 /// The header of the request's reply.
 #[repr(C, packed)]
@@ -78,9 +78,10 @@ impl Request for GetWindowAttributes {
 		client: &mut Client,
 		seq_nbr: u16,
 	) -> Result<(), HandleError> {
-		let wid = NonZeroU32::new(self.window)
-			.ok_or(HandleError::Client(Error::Window(self.window)))?;
-		let win = ctx.get_window_mut(wid)
+		let wid =
+			NonZeroU32::new(self.window).ok_or(HandleError::Client(Error::Window(self.window)))?;
+		let win = ctx
+			.get_window_mut(wid)
 			.ok_or(HandleError::Client(Error::Window(self.window)))?;
 
 		let hdr = GetWindowAttributesReply {
@@ -97,15 +98,18 @@ impl Request for GetWindowAttributes {
 			save_under: if win.attributes.save_under { 1 } else { 0 },
 			map_is_installed: win.attributes.map_is_installed,
 			map_state: win.attributes.map_state,
-			override_redirect: if win.attributes.override_redirect { 1 } else { 0 },
+			override_redirect: if win.attributes.override_redirect {
+				1
+			} else {
+				0
+			},
 			colormap: win.attributes.colormap,
 			all_event_masks: win.attributes.event_mask,
 			your_event_mask: 0, // TODO
 			do_not_propagate_mask: win.attributes.do_not_propagate_mask as _,
 			_padding: [0; 2],
 		};
-		client.write_obj(&hdr)
-			.map_err(|e| HandleError::IO(e))?;
+		client.write_obj(&hdr).map_err(|e| HandleError::IO(e))?;
 
 		Ok(())
 	}
@@ -117,9 +121,7 @@ pub fn read(buff: &[u8], _: u8) -> Result<Option<Box<dyn Request>>, Error> {
 		return Ok(None);
 	}
 
-	let hdr: &GetWindowAttributesHdr = unsafe {
-		util::reinterpret(&buff[0])
-	};
+	let hdr: &GetWindowAttributesHdr = unsafe { util::reinterpret(&buff[0]) };
 
 	Ok(Some(Box::new(GetWindowAttributes {
 		window: hdr.window,

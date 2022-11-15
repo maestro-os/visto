@@ -50,9 +50,9 @@ impl<T: Clone + Ord + Step> IDAllocator<T> {
 			Ok(i) => {
 				self.used.remove(i);
 				self.free.push(id);
-			},
+			}
 
-			Err(_) => {},
+			Err(_) => {}
 		};
 	}
 }

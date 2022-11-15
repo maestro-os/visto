@@ -1,15 +1,15 @@
 //! TODO doc
 
-use crate::ctx::Context;
+use super::Request;
 use crate::ctx::client::Client;
+use crate::ctx::Context;
+use crate::protocol;
 use crate::protocol::error::Error;
 use crate::protocol::request::HandleError;
-use crate::protocol;
 use crate::util;
 use std::cmp::min;
 use std::mem::size_of;
 use std::num::NonZeroU32;
-use super::Request;
 
 /// The header of the request's reply.
 #[repr(C, packed)]
@@ -73,12 +73,14 @@ impl Request for GetProperty {
 		client: &mut Client,
 		seq_nbr: u16,
 	) -> Result<(), HandleError> {
-		let prop_name = ctx.get_atom(self.property)
+		let prop_name = ctx
+			.get_atom(self.property)
 			.ok_or(HandleError::Client(Error::Atom(self.property)))?
 			.to_owned();
-		let wid = NonZeroU32::new(self.window)
-			.ok_or(HandleError::Client(Error::Window(self.window)))?;
-		let win = ctx.get_window_mut(wid)
+		let wid =
+			NonZeroU32::new(self.window).ok_or(HandleError::Client(Error::Window(self.window)))?;
+		let win = ctx
+			.get_window_mut(wid)
 			.ok_or(HandleError::Client(Error::Window(self.window)))?;
 
 		if let Some(prop) = win.get_property(&prop_name) {
@@ -119,17 +121,16 @@ impl Request for GetProperty {
 				length: (len / (format as usize / 8)) as u32,
 				_padding: [0; 12],
 			};
-			client.write_obj(&hdr)
-				.map_err(|e| HandleError::IO(e))?;
+			client.write_obj(&hdr).map_err(|e| HandleError::IO(e))?;
 
 			if format != 0 {
 				// Write data
-				client.write(&data)
-					.map_err(|e| HandleError::IO(e))?;
+				client.write(&data).map_err(|e| HandleError::IO(e))?;
 
 				// Write padding
 				let pad: [u8; 4] = [0; 4];
-				client.write(&pad[..protocol::pad(len)])
+				client
+					.write(&pad[..protocol::pad(len)])
 					.map_err(|e| HandleError::IO(e))?;
 			}
 		} else {
@@ -143,8 +144,7 @@ impl Request for GetProperty {
 				length: 0,
 				_padding: [0; 12],
 			};
-			client.write_obj(&hdr)
-				.map_err(|e| HandleError::IO(e))?;
+			client.write_obj(&hdr).map_err(|e| HandleError::IO(e))?;
 		}
 
 		Ok(())
@@ -159,9 +159,7 @@ pub fn read(buff: &[u8], delete: u8) -> Result<Option<Box<dyn Request>>, Error> 
 		return Ok(None);
 	}
 
-	let hdr: &GetPropertyHdr = unsafe {
-		util::reinterpret(&buff[0])
-	};
+	let hdr: &GetPropertyHdr = unsafe { util::reinterpret(&buff[0]) };
 
 	Ok(Some(Box::new(GetProperty {
 		window: hdr.window,

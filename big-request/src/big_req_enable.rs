@@ -1,13 +1,13 @@
 //! This `BigReqEnable` request allows to enable big requests.
 
 use crate::BigRequestReader;
-use visto::ctx::Context;
 use visto::ctx::client::Client;
+use visto::ctx::Context;
+use visto::protocol;
 use visto::protocol::error::Error;
 use visto::protocol::request::HandleError;
-use visto::protocol::request::MAX_REQUEST_LEN;
 use visto::protocol::request::Request;
-use visto::protocol;
+use visto::protocol::request::MAX_REQUEST_LEN;
 
 /// Reply to `BigReqEnable`.
 #[repr(C, packed)]
@@ -50,8 +50,7 @@ impl Request for BigReqEnable {
 
 			_padding1: 0,
 		};
-		client.write_obj(&reply)
-			.map_err(|e| HandleError::IO(e))?;
+		client.write_obj(&reply).map_err(|e| HandleError::IO(e))?;
 
 		Ok(())
 	}

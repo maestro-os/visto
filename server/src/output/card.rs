@@ -1,9 +1,9 @@
 //! A card is a device handling screens.
 
+use super::DRM_IOCTL_MODE_GETRESOURCES;
 use std::fs::File;
 use std::fs::OpenOptions;
 use std::os::unix::io::AsRawFd;
-use super::DRM_IOCTL_MODE_GETRESOURCES;
 
 /// Structure to get card resources from DRM.
 #[derive(Debug, Default)]
@@ -68,10 +68,7 @@ impl DRICard {
 		let path = format!("/dev/dri/card{}", id);
 
 		loop {
-			let dev = OpenOptions::new()
-				.read(true)
-				.write(true)
-				.open(&path);
+			let dev = OpenOptions::new().read(true).write(true).open(&path);
 			let dev = match dev {
 				Ok(dev) => dev,
 				Err(_) => return None,
@@ -79,13 +76,8 @@ impl DRICard {
 			let fd = dev.as_raw_fd();
 
 			let mut card_res = DRMModeCardRes::default();
-			let res = unsafe {
-				libc::ioctl(
-					fd,
-					DRM_IOCTL_MODE_GETRESOURCES,
-					&mut card_res as *const _
-				)
-			};
+			let res =
+				unsafe { libc::ioctl(fd, DRM_IOCTL_MODE_GETRESOURCES, &mut card_res as *const _) };
 			if res < 0 {
 				return None;
 			}
@@ -118,13 +110,8 @@ impl DRICard {
 				card_res.encoder_id_ptr = card.encoder_ids.as_ptr() as _;
 			}
 
-			let res = unsafe {
-				libc::ioctl(
-					fd,
-					DRM_IOCTL_MODE_GETRESOURCES,
-					&mut card_res as *const _
-				)
-			};
+			let res =
+				unsafe { libc::ioctl(fd, DRM_IOCTL_MODE_GETRESOURCES, &mut card_res as *const _) };
 
 			// TODO If count changes (hotplug), retry
 

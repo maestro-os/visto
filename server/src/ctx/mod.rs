@@ -6,13 +6,13 @@ pub mod pointer;
 pub mod screen;
 pub mod window;
 
-use client::Client;
 use crate::output::card::DRICard;
 use crate::output::connector::DRIConnector;
 use crate::poll::PollHandler;
-use crate::protocol::Rectangle;
 use crate::protocol::request::RequestReadFn;
+use crate::protocol::Rectangle;
 use crate::screens_layout::ScreensLayout;
+use client::Client;
 use pointer::Pointer;
 use screen::Screen;
 use std::cell::UnsafeCell;
@@ -42,7 +42,6 @@ pub trait Drawable {
 pub struct Selection {
 	/// The window ID of the owner of the selection.
 	owner: Option<NonZeroU32>,
-
 	// TODO
 }
 
@@ -184,20 +183,19 @@ impl<'a> Context<'a> {
 					Some(_layout) => {
 						// TODO
 						todo!();
-					},
+					}
 
 					None => {
-						let mode = conn.modes.iter()
-							.max_by(|m0,m1| {
-								let p0 = m0.hdisplay * m0.vdisplay;
-								let p1 = m1.hdisplay * m1.vdisplay;
+						let mode = conn.modes.iter().max_by(|m0, m1| {
+							let p0 = m0.hdisplay * m0.vdisplay;
+							let p1 = m1.hdisplay * m1.vdisplay;
 
-								p0.cmp(&p1)
-							});
+							p0.cmp(&p1)
+						});
 
 						// Won't fail because valid screens have at least one mode available
 						mode.unwrap().clone()
-					},
+					}
 				};
 
 				// Modesetting
@@ -212,7 +210,6 @@ impl<'a> Context<'a> {
 					height: mode.vdisplay,
 				};
 				let root = Window::new(self, None, root_rect);
-
 
 				// TODO Screen coords
 				let screen = Screen::new(&dev, conn, mode, 0, 0, root.get_id());
@@ -257,14 +254,9 @@ impl<'a> Context<'a> {
 	/// Returns the ID of the atom with the given name.
 	pub fn get_atom_from_name(&self, name: &str) -> Option<u32> {
 		// TODO Optimize
-		self.atoms.iter()
-			.filter_map(|(i, n)| {
-				if n == name {
-					Some(i)
-				} else {
-					None
-				}
-			})
+		self.atoms
+			.iter()
+			.filter_map(|(i, n)| if n == name { Some(i) } else { None })
 			.cloned()
 			.next()
 	}
@@ -306,9 +298,7 @@ impl<'a> Context<'a> {
 	///
 	/// `poll_handler` is the poll handler on which the stream is to be registered.
 	pub fn tick_clients(&mut self, poll_handler: &mut PollHandler) {
-		let mut cursor = unsafe {
-			(*self.clients.get()).cursor_front_mut()
-		};
+		let mut cursor = unsafe { (*self.clients.get()).cursor_front_mut() };
 
 		while let Some(client) = cursor.current() {
 			match client.tick(self) {
@@ -326,9 +316,9 @@ impl<'a> Context<'a> {
 					if let Some(removed) = cursor.remove_current() {
 						poll_handler.remove_fd(removed.get_stream());
 					}
-				},
+				}
 
-				_ => {},
+				_ => {}
 			}
 
 			cursor.move_next();
