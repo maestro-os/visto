@@ -1,8 +1,9 @@
 [workspace]
 
 members = [
-	"server",
 	"big-request",
+	"partitura",
+	"server",
 ]
 
 [profile.release]

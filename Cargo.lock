@@ -38,6 +38,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "partitura"
+version = "0.1.0"
+
+[[package]]
 name = "visto"
 version = "0.1.0"
 dependencies = [
