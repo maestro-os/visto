@@ -2,15 +2,19 @@
 //! supported.
 
 use crate::poll::PollHandler;
-use std::io;
+use std::fs::Permissions;
+use std::fs;
 use std::io::Read;
 use std::io::Write;
+use std::io;
 use std::net::TcpListener;
 use std::net::TcpStream;
+use std::os::unix::fs::PermissionsExt;
 use std::os::unix::net::UnixListener;
 use std::os::unix::net::UnixStream;
 use std::os::unix::prelude::AsRawFd;
 use std::os::unix::prelude::RawFd;
+use std::path::Path;
 
 /// A client's socket stream.
 pub enum Stream {
@@ -74,9 +78,15 @@ impl Listener {
 	/// - `tcp_port` is the port on which the . If network listening is not enabled, this argument
 	/// must be None.
 	/// - `poll` is the poll handler on which sockets are to be registerd.
-	pub fn new(unix_path: &str, tcp_port: Option<u16>, poll: &mut PollHandler) -> io::Result<Self> {
+	pub fn new(
+		unix_path: &Path,
+		tcp_port: Option<u16>,
+		poll: &mut PollHandler
+	) -> io::Result<Self> {
 		let unix_listener = UnixListener::bind(unix_path)?;
 		unix_listener.set_nonblocking(true)?;
+		fs::set_permissions(unix_path, Permissions::from_mode(0o777));
+
 		poll.add_fd(&unix_listener);
 
 		let tcp_listener = match tcp_port {
@@ -87,6 +97,7 @@ impl Listener {
 
 				Some(tcp_listener)
 			}
+
 			None => None,
 		};
 

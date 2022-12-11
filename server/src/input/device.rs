@@ -600,24 +600,24 @@ impl InputDevice {
 			},
 
 			(EV_REL, REL_X) => {
-				println!("rel x: {}", input.value);
+				//println!("rel x: {}", input.value);
 				// TODO
 			},
 
 			(EV_REL, REL_Y) => {
-				println!("rel y: {}", input.value);
+				//println!("rel y: {}", input.value);
 				// TODO
 			},
 
 			(EV_ABS, ABS_MT_SLOT) => self.current_slot = input.value as _,
 
 			(EV_ABS, ABS_X) => {
-				println!("x: {}", input.value);
+				//println!("x: {}", input.value);
 				// TODO
 			},
 
 			(EV_ABS, ABS_Y) => {
-				println!("y: {}", input.value);
+				//println!("y: {}", input.value);
 				// TODO
 			},
 

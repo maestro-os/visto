@@ -14,8 +14,8 @@ pub mod protocol;
 pub mod screens_layout;
 pub mod util;
 
-use ctx::client::Client;
 use ctx::Context;
+use ctx::client::Client;
 use id_allocator::IDAllocator;
 use input::InputManager;
 use net::Listener;
@@ -23,6 +23,7 @@ use output::card::DRICard;
 use poll::PollHandler;
 use std::env;
 use std::path::Path;
+use std::path::PathBuf;
 use std::process::exit;
 
 /// The release number.
@@ -121,7 +122,7 @@ fn main() {
 	ctx.init_screens(&dri_cards, None); // TODO read layout from config if present
 
 	// Creating listener
-	let unix_path = format!("/tmp/.X11-unix/X{}", args.display);
+	let unix_path = PathBuf::from(format!("/tmp/.X11-unix/X{}", args.display));
 	let tcp_port = {
 		if args.network {
 			Some(6000 + args.display as u16)
@@ -129,10 +130,11 @@ fn main() {
 			None
 		}
 	};
-	let mut listener = Listener::new(&unix_path, tcp_port, &mut poll).unwrap_or_else(|e| {
-		eprintln!("Cannot listen for incoming connections: {}", e);
-		exit(1);
-	});
+	let mut listener = Listener::new(&unix_path, tcp_port, &mut poll)
+		.unwrap_or_else(|e| {
+			eprintln!("Cannot listen for incoming connections: {}", e);
+			exit(1);
+		});
 
 	let mut client_id_allocator = IDAllocator::from_range(0..8192);
 	loop {
@@ -163,9 +165,9 @@ fn main() {
 		// Handle inputs
 		while let Ok(Some(input)) = input_manager.next() {
 			// TODO
-			println!("input: {:?}", input);
+			//println!("input: {:?}", input);
 		}
 
-		// TODO ctx.render();
+		ctx.render();
 	}
 }
