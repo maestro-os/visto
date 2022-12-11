@@ -1,5 +1,6 @@
 //! TODO doc
 
+use std::error::Error;
 use super::Font;
 use super::FontEngine;
 
@@ -32,10 +33,11 @@ struct TableDirectory {
 }
 
 /// TODO doc
+#[derive(Default)]
 pub struct TrueTypeEngine {}
 
 impl FontEngine for TrueTypeEngine {
-	fn load(&self, _buff: &[u8]) -> Result<Box<dyn Font>, ()> {
+	fn load(&self, _buff: &[u8]) -> Result<Box<dyn Font>, Box<dyn Error>> {
 		// TODO read offset subtable
 		// TODO read table directory
 

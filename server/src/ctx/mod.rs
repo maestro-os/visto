@@ -1,26 +1,37 @@
 //! TODO doc
 
 pub mod client;
-pub mod font;
 pub mod gc;
 pub mod pointer;
 pub mod screen;
 pub mod window;
 
+use client::Client;
 use crate::output::card::DRICard;
 use crate::output::connector::DRIConnector;
 use crate::poll::PollHandler;
-use crate::protocol::request::RequestReadFn;
 use crate::protocol::Rectangle;
+use crate::protocol::request::RequestReadFn;
 use crate::screens_layout::ScreensLayout;
-use client::Client;
+use partitura::Font;
+use partitura::FontEngine;
+use partitura::true_type::TrueTypeEngine;
 use pointer::Pointer;
 use screen::Screen;
 use std::cell::UnsafeCell;
 use std::collections::HashMap;
 use std::collections::LinkedList;
+use std::error::Error;
+use std::fs;
+use std::io;
 use std::num::NonZeroU32;
+use std::os::unix::ffi::OsStrExt;
+use std::path::Path;
+use std::path::PathBuf;
 use window::Window;
+
+/// The default path to use for fonts search.
+const DEFAULT_FONT_SEARCH_PATH: &str = "/usr/share/fonts";
 
 // TODO Move in its own module?
 /// Trait representing an object that can be drawn.
@@ -54,6 +65,16 @@ impl Selection {
 	}
 }
 
+/// Opens a font from the given path.
+pub fn open_font(path: &Path) -> Result<Box<dyn partitura::Font>, Box<dyn Error>> {
+	let content = fs::read(path)?;
+
+	// TODO select font engine according to format
+	let engine = TrueTypeEngine::default();
+
+	engine.load(&content)
+}
+
 /// Structure representing a context.
 pub struct Context<'a> {
 	/// The list of screens.
@@ -78,6 +99,9 @@ pub struct Context<'a> {
 
 	/// The pointer, controller by user inputs.
 	pointer: Pointer,
+
+	/// The path at which the server is looking for fonts.
+	font_search_path: String,
 }
 
 impl<'a> Context<'a> {
@@ -165,6 +189,8 @@ impl<'a> Context<'a> {
 			custom_requests: HashMap::new(),
 
 			pointer: Pointer::default(),
+
+			font_search_path: String::new(),
 		}
 	}
 
@@ -363,4 +389,58 @@ impl<'a> Context<'a> {
 			s.swap_buffers();
 		}*/
 	}
+
+	/// Returns the search path for fonts.
+	pub fn get_font_search_path(&self) -> &Path {
+		if !self.font_search_path.is_empty() {
+			Path::new(&self.font_search_path)
+		} else {
+			Path::new(DEFAULT_FONT_SEARCH_PATH)
+		}
+	}
+
+	/// Sets the search path for fonts.
+	///
+	/// If empty, the path is set to the default value.
+	pub fn set_font_search_path(&mut self, path: String) {
+		self.font_search_path = path;
+	}
+
+	/// TODO doc
+	fn search_font_(dir_path: &Path, name: &str) -> io::Result<Option<PathBuf>> {
+		for ent in fs::read_dir(dir_path)? {
+			let ent = ent?;
+			let typ = ent.file_type()?;
+			let pat = ent.path();
+
+			if typ.is_dir() {
+				if let Some(pat) = Self::search_font_(&pat, name)? {
+					return Ok(Some(pat));
+				}
+			} else if typ.is_file() {
+				if pat.file_prefix().map(|s| s.as_bytes()) == Some(name.as_bytes()) {
+					return Ok(Some(pat));
+				}
+			}
+		}
+
+		Ok(None)
+	}
+
+	/// Searches for font with the given name `name`.
+	///
+	/// If the font doesn't exist, the function returns None.
+	pub fn search_font(&self, name: &str) -> io::Result<Option<PathBuf>> {
+		Self::search_font_(self.get_font_search_path(), name)
+	}
+
+	// TODO get loaded font
+
+	/// Adds a font with the given ID.
+	pub fn add_font(&mut self, fid: u32, font: Box<dyn Font>) {
+		// TODO
+		todo!();
+	}
+
+	// TODO remove font
 }

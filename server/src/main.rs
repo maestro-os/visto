@@ -1,6 +1,7 @@
 //! TODO doc
 
 #![feature(linked_list_cursors)]
+#![feature(path_file_prefix)]
 #![feature(step_trait)]
 
 pub mod ctx;

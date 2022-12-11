@@ -1,9 +1,10 @@
 //! TODO doc
 
 mod buffer;
-mod true_type;
+pub mod true_type;
 
 use buffer::RenderBuffer;
+use std::error::Error;
 
 /// The set of parameters tweaking font rendering.
 pub struct RenderParams {
@@ -32,5 +33,5 @@ pub trait FontEngine {
 	/// Loads a font.
 	///
 	/// `buff` is the content of the font's file.
-	fn load(&self, buff: &[u8]) -> Result<Box<dyn Font>, ()>;
+	fn load(&self, buff: &[u8]) -> Result<Box<dyn Font>, Box<dyn Error>>;
 }

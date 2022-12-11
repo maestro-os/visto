@@ -12,6 +12,7 @@ pub mod get_window_attributes;
 pub mod grab_server;
 pub mod intern_atom;
 pub mod no_operation;
+pub mod open_font;
 pub mod query_extension;
 pub mod query_pointer;
 pub mod ungrab_server;
@@ -305,6 +306,7 @@ pub fn build_request(
 		GRAB_SERVER => grab_server::read(buff, optional),
 		UNGRAB_SERVER => ungrab_server::read(buff, optional),
 		QUERY_POINTER => query_pointer::read(buff, optional),
+		OPEN_FONT => open_font::read(buff, optional),
 		CREATE_GC => create_gc::read(buff, optional),
 		QUERY_EXTENSION => query_extension::read(buff, optional),
 		NO_OPERATION => no_operation::read(buff, optional),
