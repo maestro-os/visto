@@ -132,16 +132,10 @@ impl InputManager {
 
 	/// Consumes and returns the next input.
 	///
+	/// `fds` is the list of file descriptors of the devices to read from.
+	///
 	/// If no input is available, the function returns None.
-	pub fn next(&mut self) -> io::Result<Option<Input>> {
-		// TODO Clean and Optimize (avoid creating a poll handler at each call)
-
-		let mut poll_handler = PollHandler::new();
-		for d in &mut self.devs {
-			poll_handler.add_fd(d);
-		}
-		let fds = poll_handler.poll();
-
+	pub fn next(&mut self, fds: &[i32]) -> io::Result<Option<Input>> {
 		self.devs.iter_mut()
 			.filter(|dev| fds.contains(&dev.as_raw_fd()))
 			.filter_map(|dev| dev.next().transpose())

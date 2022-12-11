@@ -85,7 +85,7 @@ impl Listener {
 	) -> io::Result<Self> {
 		let unix_listener = UnixListener::bind(unix_path)?;
 		unix_listener.set_nonblocking(true)?;
-		fs::set_permissions(unix_path, Permissions::from_mode(0o777));
+		fs::set_permissions(unix_path, Permissions::from_mode(0o777))?;
 
 		poll.add_fd(&unix_listener);
 

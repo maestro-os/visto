@@ -95,16 +95,18 @@ fn parse_args() -> Result<Args, String> {
 #[allow(dead_code)]
 fn main() {
 	// Parsing arguments
-	let args = parse_args().unwrap_or_else(|e| {
-		eprintln!("error parsing arguments: {}", e);
-		exit(1);
-	});
+	let args = parse_args()
+		.unwrap_or_else(|e| {
+			eprintln!("error parsing arguments: {}", e);
+			exit(1);
+		});
 
 	// Reading extensions list
-	extension::load_extensions_list(Path::new(extension::LIST_PATH)).unwrap_or_else(|e| {
-		eprintln!("error reading extensions list: {}", e);
-		exit(1);
-	});
+	extension::load_extensions_list(Path::new(extension::LIST_PATH))
+		.unwrap_or_else(|e| {
+			eprintln!("error reading extensions list: {}", e);
+			exit(1);
+		});
 
 	// Scanning for DRI cards
 	let dri_cards = DRICard::scan();
@@ -112,10 +114,11 @@ fn main() {
 	let mut poll = PollHandler::new();
 
 	// Scanning for input devices
-	let mut input_manager = InputManager::new(&mut poll).unwrap_or_else(|e| {
-		eprintln!("error initializing input manager: {}", e);
-		exit(1);
-	});
+	let mut input_manager = InputManager::new(&mut poll)
+		.unwrap_or_else(|e| {
+			eprintln!("error initializing input manager: {}", e);
+			exit(1);
+		});
 
 	// Creating context
 	let mut ctx = Context::new();
@@ -139,7 +142,7 @@ fn main() {
 	let mut client_id_allocator = IDAllocator::from_range(0..8192);
 	loop {
 		// Waiting until something has to be done
-		poll.poll();
+		let fds = poll.poll();
 
 		// TODO Add a maximum number of clients
 
@@ -163,7 +166,7 @@ fn main() {
 		ctx.tick_clients(&mut poll);
 
 		// Handle inputs
-		while let Ok(Some(input)) = input_manager.next() {
+		while let Ok(Some(input)) = input_manager.next(&fds) {
 			// TODO
 			//println!("input: {:?}", input);
 		}
