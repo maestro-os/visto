@@ -66,7 +66,17 @@ pub enum Input {
 	ButtonPress(MouseButton),
 	/// Mouse button release.
 	ButtonRelease(MouseButton),
-	// TODO touchpad
+
+	/// Multitouch move event.
+	MultitouchMove {
+		/// The slot number.
+		slot: u32,
+
+		/// The X position.
+		x: u32,
+		/// The Y position.
+		y: u32,
+	},
 }
 
 impl TryFrom<EvDevInputEvent> for Input {
@@ -74,8 +84,28 @@ impl TryFrom<EvDevInputEvent> for Input {
 
 	fn try_from(ev: EvDevInputEvent) -> Result<Self, Self::Error> {
 		// TODO
-		println!("input: {} {} {}", ev.r#type, ev.code, ev.value);
-		Err(())
+		println!("in: {} {} {}", ev.r#type, ev.code, ev.value);
+
+		match ev.r#type {
+			device::EV_REL => {
+				// TODO
+				println!("rel: {} {}", ev.code, ev.value);
+
+				Err(())
+			},
+
+			device::EV_ABS => {
+				// TODO
+				println!("abs: {} {}", ev.code, ev.value);
+
+				Ok(Self::AbsoluteMove {
+					x: (ev.value & 0xffff) as _,
+					y: ((ev.value >> 16) & 0xffff) as _,
+				})
+			},
+
+			_ => Err(()),
+		}
 	}
 }
 
@@ -125,30 +155,22 @@ impl InputManager {
 		})
 	}
 
-	/// Consumes and returns the next input. If no input is available, the function returns None.
+	/// Consumes and returns the next input.
+	///
+	/// If no input is available, the function returns None.
 	pub fn next(&mut self) -> io::Result<Option<Input>> {
-		// TODO Clean and Optimize
+		// TODO Clean and Optimize (avoid creating a poll handler at each call)
 
 		let mut poll_handler = PollHandler::new();
 		for d in &mut self.devs {
-			println!("-> {}", d.as_raw_fd());
 			poll_handler.add_fd(d);
 		}
 		let fds = poll_handler.poll();
-		println!("=> {:?}", fds);
 
-		for d in &mut self.devs {
-			if !fds.iter().filter(|f| **f == d.as_raw_fd()).next().is_some() {
-				continue;
-			}
-
-			if let Some(i) = d.next()? {
-				if let Ok(i) = i.try_into() {
-					return Ok(Some(i));
-				}
-			}
-		}
-
-		Ok(None)
+		self.devs.iter_mut()
+			.filter(|dev| fds.contains(&dev.as_raw_fd()))
+			.filter_map(|dev| dev.next().transpose())
+			.next()
+			.transpose()
 	}
 }

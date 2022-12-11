@@ -52,7 +52,7 @@ impl PollHandler {
 		// Collecting results
 		self.fds
 			.iter()
-			.filter(|fd| fd.revents | libc::POLLIN != 0)
+			.filter(|fd| fd.revents & libc::POLLIN != 0)
 			.map(|fd| fd.fd)
 			.collect()
 	}
