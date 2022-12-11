@@ -17,3 +17,4 @@ path = "src/main.rs"
 lazy_static = "1.4.0"
 libc = "^0.2"
 libloading = "0.7.3"
+partitura = { path = "../partitura" }

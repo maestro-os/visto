@@ -48,6 +48,7 @@ dependencies = [
  "lazy_static",
  "libc",
  "libloading",
+ "partitura",
 ]
 
 [[package]]
