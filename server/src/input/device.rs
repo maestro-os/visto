@@ -1,7 +1,6 @@
 //! TODO doc
 
 use crate::util;
-use std::collections::LinkedList;
 use std::ffi::c_int;
 use std::ffi::c_short;
 use std::fs::File;
@@ -539,9 +538,6 @@ pub struct InputDevice {
 	/// The cursor on the buffer.
 	cursor: usize,
 
-	/// Events pending until further data is available.
-	pending_events: LinkedList<EvDevInputEvent>,
-
 	/// The current slot being used.
 	/// For touchpads, this represents the finger number.
 	current_slot: u32,
@@ -556,13 +552,13 @@ impl InputDevice {
 			buff: [0; size_of::<EvDevInputEvent>()],
 			cursor: 0,
 
-			pending_events: LinkedList::new(),
-
 			current_slot: 0,
 		})
 	}
 
-	/// TODO doc
+	/// Reads an event from the device file.
+	///
+	/// The function may return None if further data needs to be read.
 	fn read_input(&mut self) -> io::Result<Option<EvDevInputEvent>> {
 		loop {
 			let len = self.file.read(&mut self.buff[self.cursor..])?;
@@ -595,16 +591,22 @@ impl InputDevice {
 		//println!("-> {} {} {}", input.r#type, input.code, input.value);
 
 		match (input.r#type, input.code) {
+			(EV_KEY, _) => match input.value {
+				0 => return Ok(Some(Input::KeyPress(input.code as _))),
+				1 => return Ok(Some(Input::KeyRelease(input.code as _))),
+				2 => return Ok(Some(Input::KeyRepeat(input.code as _))),
+
+				_ => {},
+			},
+
 			(EV_REL, REL_X) => {
 				println!("rel x: {}", input.value);
 				// TODO
-				//self.pending_events.push_back(input)
 			},
 
 			(EV_REL, REL_Y) => {
 				println!("rel y: {}", input.value);
 				// TODO
-				//self.pending_events.push_back(input)
 			},
 
 			(EV_ABS, ABS_MT_SLOT) => self.current_slot = input.value as _,
@@ -612,13 +614,11 @@ impl InputDevice {
 			(EV_ABS, ABS_X) => {
 				println!("x: {}", input.value);
 				// TODO
-				//self.pending_events.push_back(input)
 			},
 
 			(EV_ABS, ABS_Y) => {
 				println!("y: {}", input.value);
 				// TODO
-				//self.pending_events.push_back(input)
 			},
 
 			_ => {},

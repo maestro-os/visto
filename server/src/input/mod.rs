@@ -9,17 +9,17 @@
 pub mod device;
 
 use crate::poll::PollHandler;
-use device::EvDevInputEvent;
 use device::InputDevice;
 use std::fs;
 use std::io;
+use std::os::unix::ffi::OsStrExt;
 use std::os::unix::io::AsRawFd;
 
 /// The path to the directory containing evdev device files.
 const EV_DEV_DIR: &str = "/dev/input";
 
 /// A keycode.
-pub type Keycode = u8;
+pub type Keycode = u16;
 
 /// Enumeration of mouse button.
 #[derive(Debug)]
@@ -40,11 +40,12 @@ pub enum MouseButton {
 /// An enumeration of input actions.
 #[derive(Debug)]
 pub enum Input {
-	// TODO Specify keycodes
 	/// Keyboard key press.
 	KeyPress(Keycode),
 	/// Keyboard key release.
 	KeyRelease(Keycode),
+	/// Keyboard key repeat.
+	KeyRepeat(Keycode),
 
 	/// Moving the cursor relative to the previous position.
 	RelativeMove {
@@ -79,36 +80,6 @@ pub enum Input {
 	},
 }
 
-impl TryFrom<EvDevInputEvent> for Input {
-	type Error = ();
-
-	fn try_from(ev: EvDevInputEvent) -> Result<Self, Self::Error> {
-		// TODO
-		println!("in: {} {} {}", ev.r#type, ev.code, ev.value);
-
-		match ev.r#type {
-			device::EV_REL => {
-				// TODO
-				println!("rel: {} {}", ev.code, ev.value);
-
-				Err(())
-			},
-
-			device::EV_ABS => {
-				// TODO
-				println!("abs: {} {}", ev.code, ev.value);
-
-				Ok(Self::AbsoluteMove {
-					x: (ev.value & 0xffff) as _,
-					y: ((ev.value >> 16) & 0xffff) as _,
-				})
-			},
-
-			_ => Err(()),
-		}
-	}
-}
-
 /// Structure managing input devices.
 pub struct InputManager {
 	/// The list of devices.
@@ -125,7 +96,11 @@ impl InputManager {
 		for ent in fs::read_dir(EV_DEV_DIR)? {
 			let ent = ent?;
 			let ent_type = ent.file_type()?;
-			if ent_type.is_dir() {
+
+			let exclude = ent_type.is_dir()
+				|| !ent.file_name().as_bytes().starts_with(b"event");
+
+			if exclude {
 				continue;
 			}
 
