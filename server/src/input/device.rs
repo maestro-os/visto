@@ -4,11 +4,12 @@ use crate::util;
 use std::ffi::c_int;
 use std::ffi::c_short;
 use std::fs::File;
-use std::io;
 use std::io::Read;
+use std::io;
 use std::mem::size_of;
 use std::os::unix::prelude::AsRawFd;
 use std::path::PathBuf;
+use super::Input;
 
 /*
  * Device properties and quirks
@@ -36,20 +37,20 @@ pub const INPUT_PROP_CNT: u16 = INPUT_PROP_MAX + 1;
  * Event types
  */
 
-pub const EV_SYN: u16 = 0x00;
-pub const EV_KEY: u16 = 0x01;
-pub const EV_REL: u16 = 0x02;
-pub const EV_ABS: u16 = 0x03;
-pub const EV_MSC: u16 = 0x04;
-pub const EV_SW: u16 = 0x05;
-pub const EV_LED: u16 = 0x11;
-pub const EV_SND: u16 = 0x12;
-pub const EV_REP: u16 = 0x14;
-pub const EV_FF: u16 = 0x15;
-pub const EV_PWR: u16 = 0x16;
-pub const EV_FF_STATUS: u16 = 0x17;
-pub const EV_MAX: u16 = 0x1f;
-pub const EV_CNT: u16 = EV_MAX + 1;
+pub const EV_SYN: c_short = 0x00;
+pub const EV_KEY: c_short = 0x01;
+pub const EV_REL: c_short = 0x02;
+pub const EV_ABS: c_short = 0x03;
+pub const EV_MSC: c_short = 0x04;
+pub const EV_SW: c_short = 0x05;
+pub const EV_LED: c_short = 0x11;
+pub const EV_SND: c_short = 0x12;
+pub const EV_REP: c_short = 0x14;
+pub const EV_FF: c_short = 0x15;
+pub const EV_PWR: c_short = 0x16;
+pub const EV_FF_STATUS: c_short = 0x17;
+pub const EV_MAX: c_short = 0x1f;
+pub const EV_CNT: c_short = EV_MAX + 1;
 
 /*
  * Synchronization events.
@@ -430,90 +431,90 @@ pub const KEY_FN_RIGHT_SHIFT: u16 = 0x1e5;
  * Relative axes
  */
 
-pub const REL_X: u16 = 0x00;
-pub const REL_Y: u16 = 0x01;
-pub const REL_Z: u16 = 0x02;
-pub const REL_RX: u16 = 0x03;
-pub const REL_RY: u16 = 0x04;
-pub const REL_RZ: u16 = 0x05;
-pub const REL_HWHEEL: u16 = 0x06;
-pub const REL_DIAL: u16 = 0x07;
-pub const REL_WHEEL: u16 = 0x08;
-pub const REL_MISC: u16 = 0x09;
-pub const REL_RESERVED: u16 = 0x0a;
-pub const REL_WHEEL_HI_RES: u16 = 0x0b;
-pub const REL_HWHEEL_HI_RES: u16 = 0x0c;
-pub const REL_MAX: u16 = 0x0f;
-pub const REL_CNT: u16 = REL_MAX + 1;
+pub const REL_X: c_short = 0x00;
+pub const REL_Y: c_short = 0x01;
+pub const REL_Z: c_short = 0x02;
+pub const REL_RX: c_short = 0x03;
+pub const REL_RY: c_short = 0x04;
+pub const REL_RZ: c_short = 0x05;
+pub const REL_HWHEEL: c_short = 0x06;
+pub const REL_DIAL: c_short = 0x07;
+pub const REL_WHEEL: c_short = 0x08;
+pub const REL_MISC: c_short = 0x09;
+pub const REL_RESERVED: c_short = 0x0a;
+pub const REL_WHEEL_HI_RES: c_short = 0x0b;
+pub const REL_HWHEEL_HI_RES: c_short = 0x0c;
+pub const REL_MAX: c_short = 0x0f;
+pub const REL_CNT: c_short = REL_MAX + 1;
 
 /*
  * Absolute axes
  */
 
-pub const ABS_X: u16 = 0x00;
-pub const ABS_Y: u16 = 0x01;
-pub const ABS_Z: u16 = 0x02;
-pub const ABS_RX: u16 = 0x03;
-pub const ABS_RY: u16 = 0x04;
-pub const ABS_RZ: u16 = 0x05;
-pub const ABS_THROTTLE: u16 = 0x06;
-pub const ABS_RUDDER: u16 = 0x07;
-pub const ABS_WHEEL: u16 = 0x08;
-pub const ABS_GAS: u16 = 0x09;
-pub const ABS_BRAKE: u16 = 0x0a;
-pub const ABS_HAT0X: u16 = 0x10;
-pub const ABS_HAT0Y: u16 = 0x11;
-pub const ABS_HAT1X: u16 = 0x12;
-pub const ABS_HAT1Y: u16 = 0x13;
-pub const ABS_HAT2X: u16 = 0x14;
-pub const ABS_HAT2Y: u16 = 0x15;
-pub const ABS_HAT3X: u16 = 0x16;
-pub const ABS_HAT3Y: u16 = 0x17;
-pub const ABS_PRESSURE: u16 = 0x18;
-pub const ABS_DISTANCE: u16 = 0x19;
-pub const ABS_TILT_X: u16 = 0x1a;
-pub const ABS_TILT_Y: u16 = 0x1b;
-pub const ABS_TOOL_WIDTH: u16 = 0x1c;
+pub const ABS_X: c_short = 0x00;
+pub const ABS_Y: c_short = 0x01;
+pub const ABS_Z: c_short = 0x02;
+pub const ABS_RX: c_short = 0x03;
+pub const ABS_RY: c_short = 0x04;
+pub const ABS_RZ: c_short = 0x05;
+pub const ABS_THROTTLE: c_short = 0x06;
+pub const ABS_RUDDER: c_short = 0x07;
+pub const ABS_WHEEL: c_short = 0x08;
+pub const ABS_GAS: c_short = 0x09;
+pub const ABS_BRAKE: c_short = 0x0a;
+pub const ABS_HAT0X: c_short = 0x10;
+pub const ABS_HAT0Y: c_short = 0x11;
+pub const ABS_HAT1X: c_short = 0x12;
+pub const ABS_HAT1Y: c_short = 0x13;
+pub const ABS_HAT2X: c_short = 0x14;
+pub const ABS_HAT2Y: c_short = 0x15;
+pub const ABS_HAT3X: c_short = 0x16;
+pub const ABS_HAT3Y: c_short = 0x17;
+pub const ABS_PRESSURE: c_short = 0x18;
+pub const ABS_DISTANCE: c_short = 0x19;
+pub const ABS_TILT_X: c_short = 0x1a;
+pub const ABS_TILT_Y: c_short = 0x1b;
+pub const ABS_TOOL_WIDTH: c_short = 0x1c;
 
-pub const ABS_VOLUME: u16 = 0x20;
+pub const ABS_VOLUME: c_short = 0x20;
 
-pub const ABS_MISC: u16 = 0x28;
+pub const ABS_MISC: c_short = 0x28;
 
-pub const ABS_RESERVED: u16 = 0x2e;
+pub const ABS_RESERVED: c_short = 0x2e;
 
 /// MT slot being modified
-pub const ABS_MT_SLOT: u16 = 0x2f;
+pub const ABS_MT_SLOT: c_short = 0x2f;
 /// Major axis of touching ellipse
-pub const ABS_MT_TOUCH_MAJOR: u16 = 0x30;
+pub const ABS_MT_TOUCH_MAJOR: c_short = 0x30;
 /// Minor axis (omit if circular)
-pub const ABS_MT_TOUCH_MINOR: u16 = 0x31;
+pub const ABS_MT_TOUCH_MINOR: c_short = 0x31;
 /// Major axis of approaching ellipse
-pub const ABS_MT_WIDTH_MAJOR: u16 = 0x32;
+pub const ABS_MT_WIDTH_MAJOR: c_short = 0x32;
 /// Minor axis (omit if circular)
-pub const ABS_MT_WIDTH_MINOR: u16 = 0x33;
+pub const ABS_MT_WIDTH_MINOR: c_short = 0x33;
 /// Ellipse orientation
-pub const ABS_MT_ORIENTATION: u16 = 0x34;
+pub const ABS_MT_ORIENTATION: c_short = 0x34;
 /// Center X touch position
-pub const ABS_MT_POSITION_X: u16 = 0x35;
+pub const ABS_MT_POSITION_X: c_short = 0x35;
 /// Center Y touch position
-pub const ABS_MT_POSITION_Y: u16 = 0x36;
+pub const ABS_MT_POSITION_Y: c_short = 0x36;
 /// Type of touching device
-pub const ABS_MT_TOOL_TYPE: u16 = 0x37;
+pub const ABS_MT_TOOL_TYPE: c_short = 0x37;
 /// Group a set of packets as a blob
-pub const ABS_MT_BLOB_ID: u16 = 0x38;
+pub const ABS_MT_BLOB_ID: c_short = 0x38;
 /// Unique ID of initiated contact
-pub const ABS_MT_TRACKING_ID: u16 = 0x39;
+pub const ABS_MT_TRACKING_ID: c_short = 0x39;
 /// Pressure on contact area
-pub const ABS_MT_PRESSURE: u16 = 0x3a;
+pub const ABS_MT_PRESSURE: c_short = 0x3a;
 /// Contact hover distance
-pub const ABS_MT_DISTANCE: u16 = 0x3b;
+pub const ABS_MT_DISTANCE: c_short = 0x3b;
 /// Center X tool position
-pub const ABS_MT_TOOL_X: u16 = 0x3c;
+pub const ABS_MT_TOOL_X: c_short = 0x3c;
 /// Center Y tool position
-pub const ABS_MT_TOOL_Y: u16 = 0x3d;
+pub const ABS_MT_TOOL_Y: c_short = 0x3d;
 
-pub const ABS_MAX: u16 = 0x3f;
-pub const ABS_CNT: u16 = ABS_MAX + 1;
+pub const ABS_MAX: c_short = 0x3f;
+pub const ABS_CNT: c_short = ABS_MAX + 1;
 
 // TODO Allow buffering of several events at once
 
@@ -536,6 +537,10 @@ pub struct InputDevice {
 	buff: [u8; size_of::<EvDevInputEvent>()],
 	/// The cursor on the buffer.
 	cursor: usize,
+
+	/// The current slot being used.
+	/// For touchpads, this represents the finger number.
+	current_slot: u32,
 }
 
 impl InputDevice {
@@ -546,13 +551,15 @@ impl InputDevice {
 
 			buff: [0; size_of::<EvDevInputEvent>()],
 			cursor: 0,
+
+			current_slot: 0,
 		})
 	}
 
-	/// Returns the next event. The function blocks until at least one event is available.
+	/// Reads an event from the device file.
 	///
-	/// If EOF has been reached, the function returns None.
-	pub fn next(&mut self) -> io::Result<Option<EvDevInputEvent>> {
+	/// The function may return None if further data needs to be read.
+	fn read_input(&mut self) -> io::Result<Option<EvDevInputEvent>> {
 		loop {
 			let len = self.file.read(&mut self.buff[self.cursor..])?;
 			if len == 0 {
@@ -570,6 +577,54 @@ impl InputDevice {
 		} else {
 			Ok(None)
 		}
+	}
+
+	/// Returns the next event.
+	/// The function blocks until at least one event is available.
+	///
+	/// The function may return None if EOF has been reached or if further events are required.
+	pub fn next(&mut self) -> io::Result<Option<Input>> {
+		let input = match self.read_input()? {
+			Some(input) => input,
+			None => return Ok(None),
+		};
+		//println!("-> {} {} {}", input.r#type, input.code, input.value);
+
+		match (input.r#type, input.code) {
+			(EV_KEY, _) => match input.value {
+				0 => return Ok(Some(Input::KeyPress(input.code as _))),
+				1 => return Ok(Some(Input::KeyRelease(input.code as _))),
+				2 => return Ok(Some(Input::KeyRepeat(input.code as _))),
+
+				_ => {},
+			},
+
+			(EV_REL, REL_X) => {
+				//println!("rel x: {}", input.value);
+				// TODO
+			},
+
+			(EV_REL, REL_Y) => {
+				//println!("rel y: {}", input.value);
+				// TODO
+			},
+
+			(EV_ABS, ABS_MT_SLOT) => self.current_slot = input.value as _,
+
+			(EV_ABS, ABS_X) => {
+				//println!("x: {}", input.value);
+				// TODO
+			},
+
+			(EV_ABS, ABS_Y) => {
+				//println!("y: {}", input.value);
+				// TODO
+			},
+
+			_ => {},
+		}
+
+		Ok(None)
 	}
 }
 

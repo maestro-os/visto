@@ -359,8 +359,8 @@ impl<'a> Context<'a> {
 			}
 		}
 
-		for s in &mut self.screens {
+		/*for s in &mut self.screens {
 			s.swap_buffers();
-		}
+		}*/
 	}
 }

@@ -164,7 +164,7 @@ impl<'a> Framebuffer<'a> {
 	}
 }
 
-impl<'a> Framebuffer<'a> {
+impl<'a> Drop for Framebuffer<'a> {
 	fn drop(&mut self) {
 		// If the buffer is mapped, free it
 		if let Some(mut buff) = self.buff {

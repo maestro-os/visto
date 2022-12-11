@@ -9,17 +9,17 @@
 pub mod device;
 
 use crate::poll::PollHandler;
-use device::EvDevInputEvent;
 use device::InputDevice;
 use std::fs;
 use std::io;
+use std::os::unix::ffi::OsStrExt;
 use std::os::unix::io::AsRawFd;
 
 /// The path to the directory containing evdev device files.
 const EV_DEV_DIR: &str = "/dev/input";
 
 /// A keycode.
-pub type Keycode = u8;
+pub type Keycode = u16;
 
 /// Enumeration of mouse button.
 #[derive(Debug)]
@@ -40,11 +40,12 @@ pub enum MouseButton {
 /// An enumeration of input actions.
 #[derive(Debug)]
 pub enum Input {
-	// TODO Specify keycodes
 	/// Keyboard key press.
 	KeyPress(Keycode),
 	/// Keyboard key release.
 	KeyRelease(Keycode),
+	/// Keyboard key repeat.
+	KeyRepeat(Keycode),
 
 	/// Moving the cursor relative to the previous position.
 	RelativeMove {
@@ -66,17 +67,17 @@ pub enum Input {
 	ButtonPress(MouseButton),
 	/// Mouse button release.
 	ButtonRelease(MouseButton),
-	// TODO touchpad
-}
 
-impl TryFrom<EvDevInputEvent> for Input {
-	type Error = ();
+	/// Multitouch move event.
+	MultitouchMove {
+		/// The slot number.
+		slot: u32,
 
-	fn try_from(ev: EvDevInputEvent) -> Result<Self, Self::Error> {
-		// TODO
-		println!("input: {} {} {}", ev.r#type, ev.code, ev.value);
-		Err(())
-	}
+		/// The X position.
+		x: u32,
+		/// The Y position.
+		y: u32,
+	},
 }
 
 /// Structure managing input devices.
@@ -95,7 +96,11 @@ impl InputManager {
 		for ent in fs::read_dir(EV_DEV_DIR)? {
 			let ent = ent?;
 			let ent_type = ent.file_type()?;
-			if ent_type.is_dir() {
+
+			let exclude = ent_type.is_dir()
+				|| !ent.file_name().as_bytes().starts_with(b"event");
+
+			if exclude {
 				continue;
 			}
 
@@ -125,30 +130,16 @@ impl InputManager {
 		})
 	}
 
-	/// Consumes and returns the next input. If no input is available, the function returns None.
-	pub fn next(&mut self) -> io::Result<Option<Input>> {
-		// TODO Clean and Optimize
-
-		let mut poll_handler = PollHandler::new();
-		for d in &mut self.devs {
-			println!("-> {}", d.as_raw_fd());
-			poll_handler.add_fd(d);
-		}
-		let fds = poll_handler.poll();
-		println!("=> {:?}", fds);
-
-		for d in &mut self.devs {
-			if !fds.iter().filter(|f| **f == d.as_raw_fd()).next().is_some() {
-				continue;
-			}
-
-			if let Some(i) = d.next()? {
-				if let Ok(i) = i.try_into() {
-					return Ok(Some(i));
-				}
-			}
-		}
-
-		Ok(None)
+	/// Consumes and returns the next input.
+	///
+	/// `fds` is the list of file descriptors of the devices to read from.
+	///
+	/// If no input is available, the function returns None.
+	pub fn next(&mut self, fds: &[i32]) -> io::Result<Option<Input>> {
+		self.devs.iter_mut()
+			.filter(|dev| fds.contains(&dev.as_raw_fd()))
+			.filter_map(|dev| dev.next().transpose())
+			.next()
+			.transpose()
 	}
 }
