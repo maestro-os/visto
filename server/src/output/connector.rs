@@ -179,14 +179,16 @@ impl DRIConnector {
 	pub fn load(card: &DRICard, id: u32) -> Option<Self> {
 		let fd = card.get_device().as_raw_fd();
 
-		let mut conn = DRMModeGetConnector::default();
-		conn.connector_id = id;
+		let mut conn = DRMModeGetConnector {
+			connector_id: id,
+			..Default::default()
+		};
 
 		let res = unsafe { libc::ioctl(fd, DRM_IOCTL_MODE_GETCONNECTOR, &mut conn as *const _) };
 		if res < 0 {
 			return None;
 		}
-		if conn.count_encoders <= 0 || conn.count_modes <= 0 || conn.count_props <= 0 {
+		if conn.count_encoders == 0 || conn.count_modes == 0 || conn.count_props == 0 {
 			return None;
 		}
 
@@ -237,16 +239,20 @@ impl DRIConnector {
 		let fd = card.get_device().as_raw_fd();
 
 		// Get encoder
-		let mut encoder = DRMModeEncoder::default();
-		encoder.encoder_id = self.encoder_id;
+		let mut encoder = DRMModeEncoder {
+			encoder_id: self.encoder_id,
+			..Default::default()
+		};
 		let res = unsafe { libc::ioctl(fd, DRM_IOCTL_MODE_GETENCODER, &mut encoder as *mut _) };
 		if res < 0 {
 			return None;
 		}
 
 		// Get CRTC
-		let mut crtc = DRMModeCRTC::default();
-		crtc.crtc_id = encoder.crtc_id;
+		let mut crtc = DRMModeCRTC {
+			crtc_id: encoder.crtc_id,
+			..Default::default()
+		};
 		let res = unsafe { libc::ioctl(fd, DRM_IOCTL_MODE_GETCRTC, &mut crtc as *mut _) };
 		if res < 0 {
 			return None;
@@ -269,11 +275,13 @@ impl DRIConnector {
 	pub fn page_flip(&self, card: &DRICard, crtc: u32, fb: &Framebuffer) {
 		let fd = card.get_device().as_raw_fd();
 
-		let mut flip = DRMModeCRTCPageFlip::default();
-		flip.fb_id = fb.get_id();
-		flip.crtc_id = crtc;
-		// TODO use constant (DRM_MODE_PAGE_FLIP_EVENT)
-		flip.flags = 0x1;
+		let mut flip = DRMModeCRTCPageFlip {
+			fb_id: fb.get_id(),
+			crtc_id: crtc,
+			// TODO use constant (DRM_MODE_PAGE_FLIP_EVENT)
+			flags: 0x1,
+			..Default::default()
+		};
 
 		unsafe {
 			libc::ioctl(fd, DRM_IOCTL_MODE_PAGE_FLIP, &mut flip as *const _);

@@ -50,9 +50,8 @@ impl Request for GetSelectionOwner {
 			.get_atom(self.atom)
 			.ok_or(HandleError::Client(Error::Atom(self.atom)))?;
 		let owner = ctx
-			.get_selection(&selection_name)
-			.map(|selection| selection.get_owner())
-			.flatten()
+			.get_selection(selection_name)
+			.and_then(|selection| selection.get_owner())
 			.map(|owner| owner.get())
 			.unwrap_or(0);
 
@@ -64,7 +63,7 @@ impl Request for GetSelectionOwner {
 			owner,
 			_padding1: [0; 20],
 		};
-		client.write_obj(&hdr).map_err(|e| HandleError::IO(e))?;
+		client.write_obj(&hdr).map_err(HandleError::IO)?;
 
 		Ok(())
 	}

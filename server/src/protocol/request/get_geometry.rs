@@ -77,7 +77,7 @@ impl Request for GetGeometry {
 			border_width: drawable.get_border_width(),
 			_padding: [0; 10],
 		};
-		client.write_obj(&reply).map_err(|e| HandleError::IO(e))?;
+		client.write_obj(&reply).map_err(HandleError::IO)?;
 
 		Ok(())
 	}

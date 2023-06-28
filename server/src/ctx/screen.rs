@@ -58,7 +58,7 @@ impl<'a> Screen<'a> {
 		root_win_id: NonZeroU32,
 	) -> Self {
 		// TODO Handle error
-		let crtc = conn.get_crtc(&dev).unwrap().crtc_id;
+		let crtc = conn.get_crtc(dev).unwrap().crtc_id;
 
 		let mut fbs = [
 			Framebuffer::new(dev, mode.hdisplay as _, mode.vdisplay as _).unwrap(),
@@ -212,7 +212,7 @@ impl<'a> Screen<'a> {
 	pub fn swap_buffers(&mut self) {
 		let fb = &self.fbs[self.curr_fb];
 
-		self.conn.page_flip(&self.dev, self.crtc, fb);
+		self.conn.page_flip(self.dev, self.crtc, fb);
 		self.curr_fb = (self.curr_fb + 1) % self.fbs.len();
 	}
 }

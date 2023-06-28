@@ -161,9 +161,10 @@ fn main() {
 		ctx.tick_clients(&mut poll);
 
 		// Handle inputs
-		for i in input_manager.next() {
+		// TODO handle error
+		while let Some(input) = input_manager.next_input().unwrap() {
 			// TODO
-			println!("input: {:?}", i);
+			println!("input: {input:?}");
 		}
 
 		// TODO ctx.render();

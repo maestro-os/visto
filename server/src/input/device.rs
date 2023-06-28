@@ -552,7 +552,7 @@ impl InputDevice {
 	/// Returns the next event. The function blocks until at least one event is available.
 	///
 	/// If EOF has been reached, the function returns None.
-	pub fn next(&mut self) -> io::Result<Option<EvDevInputEvent>> {
+	pub fn next_event(&mut self) -> io::Result<Option<EvDevInputEvent>> {
 		loop {
 			let len = self.file.read(&mut self.buff[self.cursor..])?;
 			if len == 0 {

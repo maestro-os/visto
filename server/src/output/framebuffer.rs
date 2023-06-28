@@ -85,24 +85,28 @@ impl<'a> Framebuffer<'a> {
 		let fd = card.get_device().as_raw_fd();
 
 		// Create dumb buffer
-		let mut dumb_buff = DRMModeCreateDumb::default();
-		dumb_buff.height = height;
-		dumb_buff.width = width;
-		dumb_buff.bpp = 32;
-		dumb_buff.flags = 0;
+		let mut dumb_buff = DRMModeCreateDumb {
+			height,
+			width,
+			bpp: 32,
+			flags: 0,
+			..Default::default()
+		};
 		let res = unsafe { libc::ioctl(fd, DRM_IOCTL_MODE_CREATE_DUMB, &mut dumb_buff as *mut _) };
 		if res < 0 {
 			return Err(());
 		}
 
 		// Create framebuffer
-		let mut cmd = DRMModeFBCmd::default();
-		cmd.width = width;
-		cmd.height = height;
-		cmd.pitch = dumb_buff.pitch;
-		cmd.bpp = 32;
-		cmd.depth = 24;
-		cmd.handle = dumb_buff.handle;
+		let mut cmd = DRMModeFBCmd {
+			width,
+			height,
+			pitch: dumb_buff.pitch,
+			bpp: 32,
+			depth: 24,
+			handle: dumb_buff.handle,
+			..Default::default()
+		};
 		let res = unsafe { libc::ioctl(fd, DRM_IOCTL_MODE_ADDFB, &mut cmd as *mut _) };
 		if res < 0 {
 			return Err(());
@@ -128,8 +132,10 @@ impl<'a> Framebuffer<'a> {
 	pub fn map(&mut self) -> Result<(), ()> {
 		let fd = self.card.get_device().as_raw_fd();
 
-		let mut cmd = DRMModeMapDumb::default();
-		cmd.handle = self.dumb_handle;
+		let mut cmd = DRMModeMapDumb {
+			handle: self.dumb_handle,
+			..Default::default()
+		};
 		let res = unsafe { libc::ioctl(fd, DRM_IOCTL_MODE_MAP_DUMB, &mut cmd as *mut _) };
 		if res < 0 {
 			return Err(());

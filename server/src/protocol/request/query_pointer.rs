@@ -87,7 +87,7 @@ impl Request for QueryPointer {
 
 			_padding: [0; 6],
 		};
-		client.write_obj(&hdr).map_err(|e| HandleError::IO(e))?;
+		client.write_obj(&hdr).map_err(HandleError::IO)?;
 
 		Ok(())
 	}

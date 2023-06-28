@@ -110,7 +110,7 @@ impl Client {
 
 	/// Writes the given slice.
 	pub fn write(&mut self, data: &[u8]) -> io::Result<()> {
-		self.stream.write(&data)?;
+		self.stream.write_all(data)?;
 		self.stream.flush()
 	}
 
@@ -120,9 +120,7 @@ impl Client {
 
 		// Adding padding to make requests at least 32 bytes long
 		let mut data = vec![0; max(slice.len(), 32)];
-		for i in 0..slice.len() {
-			data[i] = slice[i];
-		}
+		data[..slice.len()].copy_from_slice(slice);
 
 		self.write(&data)
 	}
@@ -144,7 +142,7 @@ impl Client {
 			additional_data_len: (additional_data_len / 4) as u16,
 		};
 
-		let len = 1 + size_of::<ConnectFailed>() + additional_data_len as usize;
+		let len = 1 + size_of::<ConnectFailed>() + additional_data_len;
 		let mut buf = vec![0; len];
 
 		// Writing data in buffer
@@ -162,7 +160,7 @@ impl Client {
 			);
 		}
 
-		self.stream.write(&buf)?;
+		self.stream.write_all(&buf)?;
 		self.stream.flush()
 	}
 
@@ -258,7 +256,7 @@ impl Client {
 			off += s.len();
 		}
 
-		self.stream.write(&buf)?;
+		self.stream.write_all(&buf)?;
 		self.stream.flush()
 	}
 

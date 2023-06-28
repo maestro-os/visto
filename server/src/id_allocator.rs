@@ -46,13 +46,9 @@ impl<T: Clone + Ord + Step> IDAllocator<T> {
 
 	/// Frees the given ID. If the ID is not allocated, the function does nothing.
 	pub fn free(&mut self, id: T) {
-		match self.used.binary_search(&id) {
-			Ok(i) => {
-				self.used.remove(i);
-				self.free.push(id);
-			}
-
-			Err(_) => {}
-		};
+		if let Ok(i) = self.used.binary_search(&id) {
+			self.used.remove(i);
+			self.free.push(id);
+		}
 	}
 }

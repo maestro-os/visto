@@ -177,7 +177,7 @@ impl<'a> Context<'a> {
 		self.screens.clear();
 
 		for dev in cards {
-			for conn in DRIConnector::scan(&dev) {
+			for conn in DRIConnector::scan(dev) {
 				// Selecting the screen's mode
 				let mode = match screens_layout {
 					Some(_layout) => {
@@ -212,7 +212,7 @@ impl<'a> Context<'a> {
 				let root = Window::new(self, None, root_rect);
 
 				// TODO Screen coords
-				let screen = Screen::new(&dev, conn, mode, 0, 0, root.get_id());
+				let screen = Screen::new(dev, conn, mode, 0, 0, root.get_id());
 				self.screens.push(screen);
 			}
 		}
@@ -301,24 +301,20 @@ impl<'a> Context<'a> {
 		let mut cursor = unsafe { (*self.clients.get()).cursor_front_mut() };
 
 		while let Some(client) = cursor.current() {
-			match client.tick(self) {
-				// On error, remove client
-				Err(e) => {
-					println!("Client disconnect: {}", e);
+			// On error, remove client
+			if let Err(e) = client.tick(self) {
+				println!("Client disconnect: {}", e);
 
-					// If the client is grabbing the server, ungrab
-					if let Some(grabbing) = self.grabbing_client.clone() {
-						if grabbing == client.get_id() {
-							self.grabbing_client = None;
-						}
-					}
-
-					if let Some(removed) = cursor.remove_current() {
-						poll_handler.remove_fd(removed.get_stream());
+				// If the client is grabbing the server, ungrab
+				if let Some(grabbing) = self.grabbing_client {
+					if grabbing == client.get_id() {
+						self.grabbing_client = None;
 					}
 				}
 
-				_ => {}
+				if let Some(removed) = cursor.remove_current() {
+					poll_handler.remove_fd(removed.get_stream());
+				}
 			}
 
 			cursor.move_next();

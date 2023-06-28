@@ -126,7 +126,7 @@ impl InputManager {
 	}
 
 	/// Consumes and returns the next input. If no input is available, the function returns None.
-	pub fn next(&mut self) -> io::Result<Option<Input>> {
+	pub fn next_input(&mut self) -> io::Result<Option<Input>> {
 		// TODO Clean and Optimize
 
 		let mut poll_handler = PollHandler::new();
@@ -138,11 +138,11 @@ impl InputManager {
 		println!("=> {:?}", fds);
 
 		for d in &mut self.devs {
-			if !fds.iter().filter(|f| **f == d.as_raw_fd()).next().is_some() {
+			if !fds.iter().any(|f| *f == d.as_raw_fd()) {
 				continue;
 			}
 
-			if let Some(i) = d.next()? {
+			if let Some(i) = d.next_event()? {
 				if let Ok(i) = i.try_into() {
 					return Ok(Some(i));
 				}

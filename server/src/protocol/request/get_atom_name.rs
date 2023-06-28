@@ -67,18 +67,18 @@ impl Request for GetAtomName {
 
 			_padding1: [0; 22],
 		};
-		client.write_obj(&hdr).map_err(|e| HandleError::IO(e))?;
+		client.write_obj(&hdr).map_err(HandleError::IO)?;
 
 		// Write name
 		client
 			.write(atom.as_bytes())
-			.map_err(|e| HandleError::IO(e))?;
+			.map_err(HandleError::IO)?;
 
 		// Write padding
 		let pad: [u8; 4] = [0; 4];
 		client
 			.write(&pad[..protocol::pad(len)])
-			.map_err(|e| HandleError::IO(e))?;
+			.map_err(HandleError::IO)?;
 
 		Ok(())
 	}

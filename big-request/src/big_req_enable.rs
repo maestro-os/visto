@@ -50,7 +50,7 @@ impl Request for BigReqEnable {
 
 			_padding1: 0,
 		};
-		client.write_obj(&reply).map_err(|e| HandleError::IO(e))?;
+		client.write_obj(&reply).map_err(HandleError::IO)?;
 
 		Ok(())
 	}

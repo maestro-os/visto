@@ -151,7 +151,7 @@ pub fn read_attrs(bitmask: u32, buff: &[u8]) -> Result<Vec<AttrValue>, Error> {
 		let val = match size {
 			1 => unsafe { *util::reinterpret::<_, u8>(&buff[off]) as u32 },
 			2 => unsafe { *util::reinterpret::<_, u16>(&buff[off]) as u32 },
-			4 => unsafe { *util::reinterpret::<_, u32>(&buff[off]) as u32 },
+			4 => unsafe { *util::reinterpret::<_, u32>(&buff[off]) },
 
 			_ => unreachable!(),
 		};

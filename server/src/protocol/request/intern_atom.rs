@@ -67,7 +67,7 @@ impl Request for InternAtom {
 			atom,
 			_padding1: [0; 20],
 		};
-		client.write_obj(&hdr).map_err(|e| HandleError::IO(e))?;
+		client.write_obj(&hdr).map_err(HandleError::IO)?;
 
 		Ok(())
 	}

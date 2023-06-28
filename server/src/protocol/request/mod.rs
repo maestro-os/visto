@@ -287,9 +287,8 @@ pub fn build_request(
 	// TODO rm
 	println!("=> {}", opcode);
 
-	match ctx.get_custom_requests().get(&opcode) {
-		Some(f) => return f(buff, optional),
-		None => {}
+	if let Some(f) = ctx.get_custom_requests().get(&opcode) {
+		return f(buff, optional);
 	}
 
 	match opcode {

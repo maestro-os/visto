@@ -109,7 +109,7 @@ impl Request for GetWindowAttributes {
 			do_not_propagate_mask: win.attributes.do_not_propagate_mask as _,
 			_padding: [0; 2],
 		};
-		client.write_obj(&hdr).map_err(|e| HandleError::IO(e))?;
+		client.write_obj(&hdr).map_err(HandleError::IO)?;
 
 		Ok(())
 	}

@@ -86,7 +86,7 @@ pub fn read(buff: &[u8], _: u8) -> Result<Option<Box<dyn Request>>, Error> {
 		let val = match size {
 			1 => unsafe { *util::reinterpret::<_, u8>(&buff[off]) as u32 },
 			2 => unsafe { *util::reinterpret::<_, u16>(&buff[off]) as u32 },
-			4 => unsafe { *util::reinterpret::<_, u32>(&buff[off]) as u32 },
+			4 => unsafe { *util::reinterpret::<_, u32>(&buff[off]) },
 
 			_ => unreachable!(),
 		};

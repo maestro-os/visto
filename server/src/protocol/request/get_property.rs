@@ -121,17 +121,17 @@ impl Request for GetProperty {
 				length: (len / (format as usize / 8)) as u32,
 				_padding: [0; 12],
 			};
-			client.write_obj(&hdr).map_err(|e| HandleError::IO(e))?;
+			client.write_obj(&hdr).map_err(HandleError::IO)?;
 
 			if format != 0 {
 				// Write data
-				client.write(&data).map_err(|e| HandleError::IO(e))?;
+				client.write(&data).map_err(HandleError::IO)?;
 
 				// Write padding
 				let pad: [u8; 4] = [0; 4];
 				client
 					.write(&pad[..protocol::pad(len)])
-					.map_err(|e| HandleError::IO(e))?;
+					.map_err(HandleError::IO)?;
 			}
 		} else {
 			let hdr = GetPropertyReply {
@@ -144,7 +144,7 @@ impl Request for GetProperty {
 				length: 0,
 				_padding: [0; 12],
 			};
-			client.write_obj(&hdr).map_err(|e| HandleError::IO(e))?;
+			client.write_obj(&hdr).map_err(HandleError::IO)?;
 		}
 
 		Ok(())
