@@ -58,8 +58,8 @@ pub struct Client {
 	/// The last sequence number.
 	sequence_number: Wrapping<u16>,
 
-	/// The current request reader. Changing this value allows to change the behaviour when reading
-	/// requests.
+	/// The current request reader. Changing this value allows to change the behaviour when
+	/// reading requests.
 	request_reader: Box<dyn RequestReader>,
 
 	/// The list of Graphics Contexts. The key is the ID of the context.

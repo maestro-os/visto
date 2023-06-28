@@ -74,7 +74,11 @@ impl Listener {
 	/// - `tcp_port` is the port on which the . If network listening is not enabled, this argument
 	/// must be None.
 	/// - `poll` is the poll handler on which sockets are to be registerd.
-	pub fn new(unix_path: &str, tcp_port: Option<u16>, poll: &mut PollHandler) -> io::Result<Self> {
+	pub fn new(
+		unix_path: &str,
+		tcp_port: Option<u16>,
+		poll: &mut PollHandler,
+	) -> io::Result<Self> {
 		let unix_listener = UnixListener::bind(unix_path)?;
 		unix_listener.set_nonblocking(true)?;
 		poll.add_fd(&unix_listener);

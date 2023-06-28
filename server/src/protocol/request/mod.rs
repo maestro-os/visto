@@ -346,8 +346,11 @@ pub trait RequestReader {
 	/// If not enough data is present in the buffer, the function returns None.
 	///
 	/// `ctx` is the current context.
-	fn read(&self, ctx: &Context, buff: &[u8])
-		-> Result<Option<(Box<dyn Request>, usize)>, XError>;
+	fn read(
+		&self,
+		ctx: &Context,
+		buff: &[u8],
+	) -> Result<Option<(Box<dyn Request>, usize)>, XError>;
 }
 
 /// The default request reader.

@@ -60,6 +60,7 @@ const DRM_IOCTL_MODE_RMFB: u64 = iowr!(DRM_IOCTL_BASE, 0xaf, u32);
 /// DRM ioctl command: Create a dumb buffer.
 const DRM_IOCTL_MODE_PAGE_FLIP: u64 = iowr!(DRM_IOCTL_BASE, 0xb0, connector::DRMModeCRTCPageFlip);
 /// DRM ioctl command: Create a dumb buffer.
-const DRM_IOCTL_MODE_CREATE_DUMB: u64 = iowr!(DRM_IOCTL_BASE, 0xb2, framebuffer::DRMModeCreateDumb);
+const DRM_IOCTL_MODE_CREATE_DUMB: u64 =
+	iowr!(DRM_IOCTL_BASE, 0xb2, framebuffer::DRMModeCreateDumb);
 /// DRM ioctl command: Map a dumb buffer.
 const DRM_IOCTL_MODE_MAP_DUMB: u64 = iowr!(DRM_IOCTL_BASE, 0xb3, framebuffer::DRMModeMapDumb);

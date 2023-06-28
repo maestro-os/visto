@@ -70,9 +70,7 @@ impl Request for GetAtomName {
 		client.write_obj(&hdr).map_err(HandleError::IO)?;
 
 		// Write name
-		client
-			.write(atom.as_bytes())
-			.map_err(HandleError::IO)?;
+		client.write(atom.as_bytes()).map_err(HandleError::IO)?;
 
 		// Write padding
 		let pad: [u8; 4] = [0; 4];
